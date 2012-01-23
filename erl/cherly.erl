@@ -29,7 +29,7 @@
 start(Size) ->
   case load_driver() of
     ok -> 
-      P = open_port({spawn, 'cherly_drv'}, [binary]),
+      P = open_port({spawn, 'cherly'}, [binary]),
       port_command(P, [?INIT, term_to_binary({0, Size})]),
       {ok, {cherly, P}};
     {error, Err} ->
@@ -87,7 +87,7 @@ stop({cherly, P}) ->
   
 load_driver() ->
   Dir = filename:join([filename:dirname(code:which(cherly)), "..", "priv"]),
-  erl_ddll:load(Dir, "cherly_drv").
+  erl_ddll:load(Dir, "cherly").
   
 % thanks erlang for fucking with the binaries passed into outputv
 unpack(Bin, SkipSize) ->

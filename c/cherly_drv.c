@@ -36,7 +36,7 @@ static ErlDrvEntry cherly_driver_entry = {
     NULL,                             /* output */
     NULL,                             /* ready_input */
     NULL,                             /* ready_output */ 
-    "cherly_drv",                     /* the name of the driver */
+    "cherly",                     /* the name of the driver */
     NULL,                             /* finish */
     NULL,                             /* handle */
     NULL,                             /* control */
