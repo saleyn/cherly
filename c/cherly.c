@@ -4,7 +4,7 @@
 
 static void cherly_eject_callback(cherly_t *cherly, char *key, int length);
 
-void cherly_init(cherly_t *cherly, int options, unsigned long max_size) {
+void cherly_init(cherly_t *cherly, int options, unsigned long long max_size) {
   cherly->judy = NULL;
   cherly->lru  = lru_create();
   cherly->size = 0;
@@ -40,7 +40,7 @@ void cherly_put(cherly_t *cherly, char *key, int length, void *value, int size, 
   cherly->items_length++;
 }
 
-void * cherly_get(cherly_t *cherly, char *key, int length) {
+void* cherly_get(cherly_t *cherly, char *key, int length, int* vallen) {
   PWord_t PValue;
   lru_item_t * item;
   
@@ -51,6 +51,7 @@ void * cherly_get(cherly_t *cherly, char *key, int length) {
   } else {
     item = (lru_item_t *)*PValue;
     lru_touch(cherly->lru, item);
+    *vallen = lru_item_vallen(item);
     return lru_item_value(item);
   }
 }

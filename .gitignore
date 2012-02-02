@@ -9,3 +9,4 @@ config.status
 c/test_suite
 releases/cherly-*/*
 Makefile
+*.dump

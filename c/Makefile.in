@@ -28,7 +28,7 @@ UNDER_TEST := $(patsubst check_%.c,%.o,$(TEST_SOURCES))
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 
-OUTPUTFILES := $(patsubst %_drv.c, ../priv/%.so, $(wildcard *_drv.c))
+OUTPUTFILES := $(patsubst %_nif.c, ../priv/%.so, $(wildcard *_nif.c))
 
 DEFS = -DHAVE_CONFIG_H
 
@@ -42,7 +42,7 @@ debug:
 
 .SUFFIXES: .o .c .h
 
-../priv/%.so: %_drv.o cherly.o double_link.o lru.o
+../priv/%.so: %_nif.o cherly.o double_link.o lru.o
 	mkdir -p ../priv
 	$(CC) $(CFLAGS) $(DEFS) $(DEBUG) $(LDFLAGS) -o $@ $^ @LIBEI@ @JUDY_LIBS@
 
