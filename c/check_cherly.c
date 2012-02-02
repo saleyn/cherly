@@ -5,12 +5,12 @@
 START_TEST(basic_get_and_put)
 {  cherly_t cherly;
   char* stuff = "stuff";
-  
+  int len;  
   cherly_init(&cherly, 0, 120);
-  fail_unless(NULL == cherly_get(&cherly, "noexist", 7));
+  fail_unless(NULL == cherly_get(&cherly, "noexist", 7, &len));
   cherly_put(&cherly, "exist", 5, stuff, 5, NULL);
-  fail_unless(NULL == cherly_get(&cherly, "noexist", 7));
-  fail_unless(stuff == cherly_get(&cherly, "exist", 5));
+  fail_unless(NULL == cherly_get(&cherly, "noexist", 7, &len));
+  fail_unless(stuff == cherly_get(&cherly, "exist", 5, &len));
   cherly_destroy(&cherly);
 }
 END_TEST
