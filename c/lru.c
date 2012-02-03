@@ -2,6 +2,7 @@
 #include "double_link.h"
 #include <stdlib.h>
 #include "common.h"
+#include <stdio.h>
 
 static void lru_destroy_item(lru_item_t *item);
 
@@ -81,6 +82,7 @@ void lru_remove_and_destroy(lru_t *lru, lru_item_t *item) {
 static void lru_destroy_item(lru_item_t *item) {
   if (NULL != item->destroy) {
     (*(item->destroy))(item->key, item->keylen, item->value, item->vallen);
+    dprintf("invoke destroy callback %s %p\n", item->key, item->value);
   }
   free(item);
 }

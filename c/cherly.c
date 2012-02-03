@@ -27,7 +27,7 @@ void cherly_put(cherly_t *cherly, char *key, int length, void *value, int size, 
   }
   
   if (cherly->size + size > cherly->max_size) {
-    dprintf("projected new size %d is more than max %d\n", cherly->size + size, cherly->max_size);
+    dprintf("projected new size %lld is more than max %lld\n", cherly->size + size, cherly->max_size);
     cherly->size -= lru_eject_by_size(cherly->lru, (length + size) - (cherly->max_size - cherly->size), (EjectionCallback)cherly_eject_callback, cherly);
   }
   
@@ -36,7 +36,7 @@ void cherly_put(cherly_t *cherly, char *key, int length, void *value, int size, 
   JHSI(PValue, cherly->judy, key, length);
   *PValue = (Word_t)item;
   cherly->size += lru_item_size(item);
-  dprintf("new cherly size is %d\n", cherly->size);
+  dprintf("new cherly size is %lld\n", cherly->size);
   cherly->items_length++;
 }
 

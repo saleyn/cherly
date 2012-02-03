@@ -40,7 +40,7 @@ static ERL_NIF_TERM cherly_nif_init(ErlNifEnv* env, int argc, const ERL_NIF_TERM
 	dprintf("handle %p\n", obj);
 	term = enif_make_resource(env, obj);
 	cherly_init(obj, 0, max_size);
-	dprintf("cherly init %d\n", max_size);
+	dprintf("cherly init %Ilu\n", max_size);
 	enif_release_resource(obj);
 	return term;
 }
@@ -70,9 +70,10 @@ static ERL_NIF_TERM cherly_nif_get(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 	char key[1024]; // restricted by URL length
 	int len;
 	int vallen;
-	void* value;
+	ErlNifBinary* value;
 	ErlNifResourceType* pert;
 	ErlNifBinary bin;
+	ERL_NIF_TERM atom;
 	if (argc < 2) {
 		return enif_make_badarg(env);
 	}
@@ -86,20 +87,28 @@ static ERL_NIF_TERM cherly_nif_get(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 		return enif_make_badarg(env);
 	}
 	dprintf("key = %s\n", key);
-	value = cherly_get(obj, key, len, &vallen);
-	dprintf("get value %p\n", value);
-	if (!enif_alloc_binary(vallen, &bin)) {
+	value = (ErlNifBinary*)cherly_get(obj, key, len, &vallen);
+	if (value == NULL) {
+		if (!enif_make_existing_atom(env, "none", &atom, ERL_NIF_LATIN1)) {
+			dprintf("failed making `true` atom \n");
+			return atom;
+		}
+		return atom;
+	}
+	dprintf("bin pointer %p\n", value);
+	dprintf("get value.size %lu value.data %p \n", value->size, value->data);
+	if (!enif_alloc_binary(value->size, &bin)) {
 		return enif_make_badarg(env);
 	}
-	memcpy(bin.data, value, vallen);
+	memcpy(bin.data, value->data, value->size);
+	bin.size = value->size;
 	return enif_make_binary(env, &bin);
 }
 
 static void cherly_nif_destroy(char * key, int keylen, void * value, int vallen) {
-	ErlNifBinary bin;
-	bin.data = value;
-	bin.size = vallen;
-	enif_release_binary(&bin);
+	ErlNifBinary* bin = (ErlNifBinary*)value;
+	enif_release_binary(bin);
+	free(bin);
 }
 
 static ERL_NIF_TERM cherly_nif_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -108,6 +117,7 @@ static ERL_NIF_TERM cherly_nif_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 	int len;
 	ErlNifResourceType* pert;
 	ErlNifBinary bin;
+	ErlNifBinary* heap;
 	ERL_NIF_TERM atom;
 	if (argc < 3) {
 		return enif_make_badarg(env);
@@ -125,11 +135,14 @@ static ERL_NIF_TERM cherly_nif_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 	if (!enif_inspect_binary(env, argv[2], &bin)) {
 		return enif_make_badarg(env);
 	}
-	// get bin referenced status
+	// set bin referenced status
 	if (!enif_realloc_binary(&bin, bin.size)) {
 		return enif_make_badarg(env);
 	}
-	cherly_put(obj, key, len, bin.data, bin.size, &cherly_nif_destroy);
+	heap = malloc(sizeof(ErlNifBinary));
+	memcpy((void*)heap, (void*)&bin, sizeof(ErlNifBinary));
+	cherly_put(obj, key, len, heap, sizeof(ErlNifBinary), &cherly_nif_destroy);
+	dprintf("bin data %p, bin size %lu \n", bin.data, bin.size);
 	if (!enif_make_existing_atom(env, "true", &atom, ERL_NIF_LATIN1)) {
 		dprintf("failed making `true` atom \n");
 		return atom;
@@ -177,7 +190,7 @@ static ERL_NIF_TERM cherly_nif_size(ErlNifEnv* env, int argc, const ERL_NIF_TERM
 	}
 	dprintf("handle %p\n", obj);
 	size = cherly_size(obj);
-	dprintf("cherly size %d\n", size);
+	dprintf("cherly size %llu\n", size);
 	return enif_make_uint64(env, size);
 }
 
@@ -194,19 +207,19 @@ static ERL_NIF_TERM cherly_nif_items(ErlNifEnv* env, int argc, const ERL_NIF_TER
 	}
 	dprintf("handle %p\n", obj);
 	len = cherly_items_length(obj);
-	dprintf("cherly item length %d\n", len);
+	dprintf("cherly item length %llu\n", len);
 	return enif_make_uint64(env, len);
 }
 
 static ErlNifFunc cherly_nif_funcs[] =
 {
-    {"init", 1, cherly_nif_init},
+    {"start", 1, cherly_nif_init},
     {"stop", 1, cherly_nif_stop},
     {"get" , 2, cherly_nif_get},
     {"put" , 3, cherly_nif_put},
-    {"rem" , 2, cherly_nif_remove},
+    {"remove" , 2, cherly_nif_remove},
     {"size", 1, cherly_nif_size},
-    {"len" , 1, cherly_nif_items}
+    {"items" , 1, cherly_nif_items}
 };
 ERL_NIF_INIT(cherly, cherly_nif_funcs, cherly_nif_onload, NULL, cherly_nif_upgrade, NULL)
 
