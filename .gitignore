@@ -1,5 +1,4 @@
 autom4te.cache/*
-c/Makefile
 erl/Makefile
 ebin/*.beam
 priv/*.so

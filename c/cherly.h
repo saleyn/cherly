@@ -1,7 +1,7 @@
 #ifndef __CHERLY__
 #define __CHERLY__
 
-#include <Judy.h>
+#include "runtime.h"
 #include "lru.h"
 
 #define cherly_size(cherly) ((cherly)->size)
@@ -9,7 +9,7 @@
 #define cherly_max_size(cherly) ((cherly)->max_size)
 
 typedef struct _cherly_t {
-  Pvoid_t judy;
+  Hmap* hm;
   lru_t *lru;
   unsigned long long size;
   unsigned long long items_length;

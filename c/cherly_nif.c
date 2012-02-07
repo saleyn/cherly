@@ -1,4 +1,3 @@
-#include <Judy.h>
 #include "erl_nif.h"
 #include <stdio.h>
 #include <string.h>
