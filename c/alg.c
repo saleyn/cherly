@@ -84,5 +84,5 @@ runtime_strcopy(uintptr s, void *a, void *b)
 }
 
 Alg StrAlg = { runtime_strhash, runtime_strequal, runtime_strcopy };
-Type StrType = { sizeof(void*), &StrAlg };
+Type StrType = { sizeof(String), &StrAlg };
 MapType StrMapType = { &StrType, &StrType };

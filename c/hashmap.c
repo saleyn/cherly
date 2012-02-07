@@ -667,7 +667,7 @@ hash_visit_internal (struct hash_subtable *st,
 	}
 }
 
-static void
+void
 hash_visit (Hmap *h, void (*data_visit) (void *arg, int32 level, void *data), void *arg)
 {
 	hash_visit_internal (h->st, 0, 0, data_visit, arg);

@@ -98,3 +98,5 @@ void	runtime_mapiterkeyvalue(hash_iter*, void*, void*);
 void	runtime_mapiterinit(MapType*, Hmap*, hash_iter*);
 Hmap*	runtime_makemap_c(MapType*, int64);
 void	runtime_mapdestroy(Hmap*);
+// for debug
+void	hash_visit (Hmap*, void (*data_visit) (void*, int32 , void*), void*);

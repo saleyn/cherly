@@ -9,7 +9,7 @@ bindir = $(exec_prefix)/bin
 infodir = $(prefix)/info
 libdir = $(prefix)/lib/gnudl
 mandir = $(prefix)/man/man1
-CFLAGS = $(CPPFLAGS) @CFLAGS@ @JUDY_CFLAGS@
+CFLAGS = $(CPPFLAGS) @CFLAGS@ -Wno-strict-aliasing -Wno-pointer-to-int-cast -D_64BIT
 
 ifeq ($(shell uname),Linux)
 	ARCH = linux
@@ -42,12 +42,14 @@ debug:
 
 .SUFFIXES: .o .c .h
 
-../priv/%.so: %_nif.o cherly.o double_link.o lru.o
-	mkdir -p ../priv
-	$(CC) $(CFLAGS) $(DEFS) $(DEBUG) $(LDFLAGS) -o $@ $^ @LIBEI@ @JUDY_LIBS@
+.SECONDARY: alg.o hashmap.o runtime.o
 
-test_suite: suite.o $(TEST_OBJECTS) $(UNDER_TEST)
-	$(CC) $(CFLAGS) $(DEFS) $(DEBUG) -o $@ $^ @LIBEI@ @JUDY_LIBS@ -lcheck
+../priv/%.so: %_nif.o cherly.o double_link.o lru.o alg.o hashmap.o runtime.o
+	mkdir -p ../priv
+	$(CC) $(CFLAGS) $(DEFS) $(DEBUG) $(LDFLAGS) -o $@ $^
+
+test_suite: suite.o $(TEST_OBJECTS) $(UNDER_TEST) alg.o hashmap.o runtime.o
+	$(CC) $(CFLAGS) $(DEFS) $(DEBUG) -o $@ $^ -lcheck
 
 test: test_suite
 	$(MAKE) TEST=-DTEST
