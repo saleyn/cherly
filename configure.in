@@ -35,12 +35,22 @@ CPPFLAGS="$CPPFLAGS -I ${ERTSBASE}/include -I ${ERLDIR}/lib/${ERL_INTERFACE}/inc
 
 LIBEI="${ERLDIR}/lib/${ERL_INTERFACE}/lib/libei.a"
 AC_SUBST(LIBEI)
-# Checks for header files.
-AC_CHECK_HEADERS([])
 
-# Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
+AH_BOTTOM([#if HAVE_STDBOOL_H
+#include <stdbool.h>
+#else
+#define bool char
+#define false 0
+#define true 1
+#endif ])
 
+AC_CHECK_HEADERS([inttypes.h])
+AH_BOTTOM([#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+])
+AM_CONFIG_HEADER(config.h)
 # Checks for library functions.
 AC_HEADER_STDC
 

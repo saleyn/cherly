@@ -3,6 +3,7 @@
 
 #include "runtime.h"
 #include "lru.h"
+#include "slabs.h"
 
 #define cherly_size(cherly) ((cherly)->size)
 #define cherly_items_length(cherly) ((cherly)->items_length)
@@ -10,6 +11,7 @@
 
 typedef struct _cherly_t {
   Hmap* hm;
+  slabs_t slab;
   lru_t *lru;
   unsigned long long size;
   unsigned long long items_length;
