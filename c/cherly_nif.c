@@ -69,7 +69,7 @@ static ERL_NIF_TERM cherly_nif_get(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 	char key[1024]; // restricted by URL length
 	int len;
 	int vallen;
-	ErlNifBinary* value;
+	void* value;
 	ErlNifResourceType* pert;
 	ErlNifBinary bin;
 	ERL_NIF_TERM atom;
@@ -86,7 +86,7 @@ static ERL_NIF_TERM cherly_nif_get(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 		return enif_make_badarg(env);
 	}
 	dprintf("key = %s\n", key);
-	value = (ErlNifBinary*)cherly_get(obj, key, len, &vallen);
+	value = cherly_get(obj, key, len, &vallen);
 	if (value == NULL) {
 		if (!enif_make_existing_atom(env, "none", &atom, ERL_NIF_LATIN1)) {
 			dprintf("failed making `true` atom \n");
@@ -96,19 +96,20 @@ static ERL_NIF_TERM cherly_nif_get(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 	}
 	dprintf("bin pointer %p\n", value);
 	dprintf("get value.size %lu value.data %p \n", value->size, value->data);
-	if (!enif_alloc_binary(value->size, &bin)) {
+	if (!enif_alloc_binary(vallen, &bin)) {
 		return enif_make_badarg(env);
 	}
-	memcpy(bin.data, value->data, value->size);
-	bin.size = value->size;
+	memcpy(bin.data, value, vallen);
 	return enif_make_binary(env, &bin);
 }
 
+/*
 static void cherly_nif_destroy(char * key, int keylen, void * value, int vallen) {
 	ErlNifBinary* bin = (ErlNifBinary*)value;
 	enif_release_binary(bin);
 	free(bin);
 }
+*/
 
 static ERL_NIF_TERM cherly_nif_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 	cherly_t *obj;
@@ -116,7 +117,6 @@ static ERL_NIF_TERM cherly_nif_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 	int len;
 	ErlNifResourceType* pert;
 	ErlNifBinary bin;
-	ErlNifBinary* heap;
 	ERL_NIF_TERM atom;
 	if (argc < 3) {
 		return enif_make_badarg(env);
@@ -134,13 +134,7 @@ static ERL_NIF_TERM cherly_nif_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 	if (!enif_inspect_binary(env, argv[2], &bin)) {
 		return enif_make_badarg(env);
 	}
-	// set bin referenced status
-	if (!enif_realloc_binary(&bin, bin.size)) {
-		return enif_make_badarg(env);
-	}
-	heap = malloc(sizeof(ErlNifBinary));
-	memcpy((void*)heap, (void*)&bin, sizeof(ErlNifBinary));
-	cherly_put(obj, key, len, heap, sizeof(ErlNifBinary), &cherly_nif_destroy);
+	cherly_put(obj, key, len, bin.data, bin.size, NULL);
 	dprintf("bin data %p, bin size %lu \n", bin.data, bin.size);
 	if (!enif_make_existing_atom(env, "true", &atom, ERL_NIF_LATIN1)) {
 		dprintf("failed making `true` atom \n");

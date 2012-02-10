@@ -186,7 +186,7 @@ static void *do_slabs_alloc(slabs_t* pst, const size_t size, unsigned int id) {
     } else {
         //MEMCACHED_SLABS_ALLOCATE_FAILED(size, id);
     }
-    printf("alloc ps:%p sid:%u p:%p np:%p cnt:%u used:%lu rest:%u \n", pst, id, ret, p->end_page_ptr, p->sl_curr, p->requested, p->end_page_free);
+    //printf("alloc ps:%p sid:%u p:%p np:%p cnt:%u used:%lu rest:%u \n", pst, id, ret, p->end_page_ptr, p->sl_curr, p->requested, p->end_page_free);
 
     return ret;
 }
@@ -212,7 +212,7 @@ static void do_slabs_free(slabs_t* pst, void *ptr, const size_t size, unsigned i
 
     p->sl_curr++;
     p->requested -= size;
-    printf("freed ps:%p sid:%u p:%p cnt:%u used:%lu\n", pst, id, it, p->sl_curr, p->requested);
+    //printf("freed ps:%p sid:%u p:%p cnt:%u used:%lu\n", pst, id, it, p->sl_curr, p->requested);
     return;
 }
 
