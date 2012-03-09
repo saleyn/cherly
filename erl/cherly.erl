@@ -19,7 +19,18 @@
 -endif.
 
 init() ->
-  ok = load_driver().
+    SoName = case code:priv_dir(?MODULE) of
+                 {error, bad_name} ->
+                     case code:which(?MODULE) of
+                         Filename when is_list(Filename) ->
+                             filename:join([filename:dirname(Filename),"../priv", "cherly"]);
+                         _ ->
+                             filename:join("../priv", "cherly")
+                     end;
+                 Dir ->
+                     filename:join(Dir, "cherly")
+             end,
+    erlang:load_nif(SoName, 0).
 
 %% api fallbacks
 
@@ -44,11 +55,3 @@ items(_Res) ->
 stop(_Res) ->
   exit(nif_library_not_loaded).
 
-%%====================================================================
-%% Internal functions
-%%====================================================================
-  
-load_driver() ->
-  Path = filename:join([filename:dirname(code:which(cherly)), "..", "priv", ?MODULE]),
-  erlang:load_nif(Path, 0).
-  
