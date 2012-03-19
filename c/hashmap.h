@@ -74,7 +74,9 @@ struct Hmap;		/* opaque */
 struct hash_subtable;	/* opaque */
 struct hash_entry;	/* opaque */
 
+#ifndef __DARWIN__
 typedef uintptr uintptr_t;
+#endif
 typedef uintptr_t hash_hash_t;
 
 struct hash_iter {
