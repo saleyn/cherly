@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+#ifndef __RUNTIME__
+#define __RUNTIME__
+
 /*
  * basic types
  */
@@ -100,3 +103,4 @@ Hmap*	runtime_makemap_c(MapType*, int64);
 void	runtime_mapdestroy(Hmap*);
 // for debug
 void	hash_visit (Hmap*, void (*data_visit) (void*, int32 , void*), void*);
+#endif

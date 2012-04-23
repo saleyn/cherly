@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+#ifndef __HASHMAP__
+#define __HASHMAP__
+
+#include "runtime.h"
+
 /* A hash table.
    Example, hashing nul-terminated char*s:
 	hash_hash_t str_hash (void *v) {
@@ -74,8 +79,13 @@ struct Hmap;		/* opaque */
 struct hash_subtable;	/* opaque */
 struct hash_entry;	/* opaque */
 
-#ifndef __APPLE_CC__
-typedef uintptr uintptr_t;
+#ifdef __APPLE__
+    #ifdef __GNUC__
+    #else
+        typedef uintptr uintptr_t; // clang
+    #endif
+#else
+    typedef uintptr uintptr_t; // not mac(xnix, win)
 #endif
 typedef uintptr_t hash_hash_t;
 
@@ -162,3 +172,5 @@ struct hash_iter {
    whether used or not.   "level" is the subtable level, 0 means first level. */
 /* TESTING ONLY: DO NOT USE THIS ROUTINE IN NORMAL CODE */
 //void hash_visit (struct hash *h, void (*data_visit) (void *arg, int32 level, void *data), void *arg);
+
+#endif
