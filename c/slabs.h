@@ -2,6 +2,8 @@
 #ifndef SLABS_H
 #define SLABS_H
 
+#include "runtime.h"
+
 #define		SETTING_CHUNK_SIZE	128
 #define		SETTING_ITEM_SIZE_MAX	1024 * 1024
 #define		POWER_LARGEST		200

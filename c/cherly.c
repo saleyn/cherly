@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "cherly.h"
 #include "common.h"
 
@@ -76,7 +77,7 @@ void* cherly_get(cherly_t *cherly, char *key, int length, int* vallen) {
 }
 
 static inline void cherly_slab_free(slabs_t* slab, char* key) {
-  size_t* psize = key;
+  size_t* psize = (size_t*)key;
   psize--;
   slabs_free(slab, (void*)psize, *psize);
 }

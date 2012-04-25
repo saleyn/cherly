@@ -9,7 +9,7 @@ bindir = $(exec_prefix)/bin
 infodir = $(prefix)/info
 libdir = $(prefix)/lib/gnudl
 mandir = $(prefix)/man/man1
-CFLAGS = $(CPPFLAGS) @CFLAGS@ -Wno-strict-aliasing -Wno-pointer-to-int-cast -D_64BIT
+CFLAGS = $(CPPFLAGS) @CFLAGS@ -Wunused-function -Wno-strict-aliasing -Wno-pointer-to-int-cast -D_64BIT
 
 ifeq ($(shell uname),Linux)
 	ARCH = linux

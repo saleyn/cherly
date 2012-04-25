@@ -543,7 +543,7 @@ Again:
 				// Set last_hash to impossible value and
 				// break it->changes, so that check at top of
 				// hash_next will be used if we get called again.
-				it->last_hash = ~(uintptr_t)0;
+				it->last_hash = ~(hash_hash_t)0;
 				it->changes--;
 				return (0);
 			} else {
@@ -558,7 +558,7 @@ Again:
 				// Set last_hash to impossible value and
 				// break it->changes, so that check at top of
 				// hash_next will be used if we get called again.
-				it->last_hash = ~(uintptr_t)0;
+				it->last_hash = ~(hash_hash_t)0;
 				it->changes--;
 				return (0);
 			}

@@ -22,7 +22,7 @@
 #include <assert.h>
 #include <pthread.h>
 
-#include "config.h"
+//#include "config.h"
 #include "slabs.h"
 
 typedef struct slabheader {

@@ -79,15 +79,7 @@ struct Hmap;		/* opaque */
 struct hash_subtable;	/* opaque */
 struct hash_entry;	/* opaque */
 
-#ifdef __APPLE__
-    #ifdef __GNUC__
-    #else
-        typedef uintptr uintptr_t; // clang
-    #endif
-#else
-    typedef uintptr uintptr_t; // not mac(xnix, win)
-#endif
-typedef uintptr_t hash_hash_t;
+typedef uintptr hash_hash_t;
 
 struct hash_iter {
 	uint8*	data;		/* returned from next */
