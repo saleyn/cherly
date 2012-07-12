@@ -1,11 +1,4 @@
-autom4te.cache/*
-erl/Makefile
 ebin/*.beam
-priv/*.so
+priv/
 c/*.o
-config.log
-config.status
-c/test_suite
-releases/cherly-*/*
-Makefile
-*.dump
+.eunit/
