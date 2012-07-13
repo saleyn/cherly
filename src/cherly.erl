@@ -7,16 +7,14 @@
 %%% @end  
 %%%
 %%% @since 2009-02-22 by Cliff Moon
+%%% @since 2012-02-22 by Yoshiyuki Kanno
 %%%-------------------------------------------------------------------
 -module(cherly).
 -author('cliff@moonpolysoft.com').
+-author('Yoshiyuki Kanno').
 
 -export([start/1, put/3, get/2, remove/2, size/1, items/1, stop/1]).
 -on_load(init/0).
-
--ifdef(TEST).
--include("test_cherly.erl").
--endif.
 
 init() ->
     SoName = case code:priv_dir(?MODULE) of

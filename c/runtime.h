@@ -19,7 +19,7 @@ typedef	unsigned long long int	uint64;
 typedef	float			float32;
 typedef	double			float64;
 
-#ifdef _64BIT
+#if defined(__ia64) || defined(__x86_64) || defined(__amd64)
 typedef	uint64		uintptr;
 typedef	int64		intptr;
 #else
