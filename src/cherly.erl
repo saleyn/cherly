@@ -31,25 +31,25 @@ init() ->
     erlang:load_nif(SoName, 0).
 
 %% api fallbacks
-
+%%
 start(_Size) ->
-  exit(nif_library_not_loaded).
+    exit(nif_library_not_loaded).
 
 put(_Res, _Key, _Value) ->
-  exit(nif_library_not_loaded).
-  
+    exit(nif_library_not_loaded).
+
 get(_Res, _Key) ->
-  exit(nif_library_not_loaded).
-  
+    exit(nif_library_not_loaded).
+
 remove(_Res, _Key) ->
-  exit(nif_library_not_loaded).
-  
+    exit(nif_library_not_loaded).
+
 size(_Res) ->
-  exit(nif_library_not_loaded).
-  
+    exit(nif_library_not_loaded).
+
 items(_Res) ->
-  exit(nif_library_not_loaded).
-  
+    exit(nif_library_not_loaded).
+
 stop(_Res) ->
-  exit(nif_library_not_loaded).
+    exit(nif_library_not_loaded).
 
