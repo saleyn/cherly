@@ -69,6 +69,19 @@ put_plural_objects_test() ->
     ?assertEqual(Size,  cherly:size(C)),
     cherly:stop(C).
 
+put_term_test() ->
+    C = cherly:start(10000),
+    K = term_to_binary({1234567890, "server/erlang"}),
+    V = <<"LEOFS">>,
+    Len = byte_size(K) + byte_size(V),
+
+    true = cherly:put(C, K, V),
+    V = cherly:get(C, K),
+
+    ?assertEqual(1,   cherly:items(C)),
+    ?assertEqual(Len, cherly:size(C)),
+    cherly:stop(C).
+
 put_get_and_remove_test() ->
     C = cherly:start(120),
     K = <<"key">>,
@@ -92,8 +105,6 @@ put_with_lru_eject_test() ->
                         binary_to_list(Mod)
                 end, "abc", lists:seq(1, 10)),
     ?debugVal(cherly:size(C)),
-    ?debugVal(cherly:items(C)),
-
     ?assertEqual(8, cherly:items(C)),
     cherly:stop(C).
 
