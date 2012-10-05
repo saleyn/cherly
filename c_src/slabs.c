@@ -217,95 +217,95 @@ static void do_slabs_free(slabs_t* pst, void *ptr, const size_t size, unsigned i
 }
 
 /*
-static int nz_strcmp(int nzlength, const char *nz, const char *z) {
-    int zlength=strlen(z);
-    return (zlength == nzlength) && (strncmp(nz, z, zlength) == 0) ? 0 : -1;
-}
+  static int nz_strcmp(int nzlength, const char *nz, const char *z) {
+  int zlength=strlen(z);
+  return (zlength == nzlength) && (strncmp(nz, z, zlength) == 0) ? 0 : -1;
+  }
 
-bool get_stats(const char *stat_type, int nkey, ADD_STAT add_stats, void *c) {
-    bool ret = true;
+  bool get_stats(const char *stat_type, int nkey, ADD_STAT add_stats, void *c) {
+  bool ret = true;
 
-    if (add_stats != NULL) {
-        if (!stat_type) {
-            STATS_LOCK();
-            APPEND_STAT("bytes", "%llu", (unsigned long long)stats.curr_bytes);
-            APPEND_STAT("curr_items", "%u", stats.curr_items);
-            APPEND_STAT("total_items", "%u", stats.total_items);
-            APPEND_STAT("evictions", "%llu",
-                        (unsigned long long)stats.evictions);
-            APPEND_STAT("reclaimed", "%llu",
-                        (unsigned long long)stats.reclaimed);
-            STATS_UNLOCK();
-        } else if (nz_strcmp(nkey, stat_type, "items") == 0) {
-            item_stats(add_stats, c);
-        } else if (nz_strcmp(nkey, stat_type, "slabs") == 0) {
-            slabs_stats(add_stats, c);
-        } else if (nz_strcmp(nkey, stat_type, "sizes") == 0) {
-            item_stats_sizes(add_stats, c);
-        } else {
-            ret = false;
-        }
-    } else {
-        ret = false;
-    }
+  if (add_stats != NULL) {
+  if (!stat_type) {
+  STATS_LOCK();
+  APPEND_STAT("bytes", "%llu", (unsigned long long)stats.curr_bytes);
+  APPEND_STAT("curr_items", "%u", stats.curr_items);
+  APPEND_STAT("total_items", "%u", stats.total_items);
+  APPEND_STAT("evictions", "%llu",
+  (unsigned long long)stats.evictions);
+  APPEND_STAT("reclaimed", "%llu",
+  (unsigned long long)stats.reclaimed);
+  STATS_UNLOCK();
+  } else if (nz_strcmp(nkey, stat_type, "items") == 0) {
+  item_stats(add_stats, c);
+  } else if (nz_strcmp(nkey, stat_type, "slabs") == 0) {
+  slabs_stats(add_stats, c);
+  } else if (nz_strcmp(nkey, stat_type, "sizes") == 0) {
+  item_stats_sizes(add_stats, c);
+  } else {
+  ret = false;
+  }
+  } else {
+  ret = false;
+  }
 
-    return ret;
-}
+  return ret;
+  }
 
-static void do_slabs_stats(ADD_STAT add_stats, void *c) {
-    int i, total;
+  static void do_slabs_stats(ADD_STAT add_stats, void *c) {
+  int i, total;
 
-    struct thread_stats thread_stats;
-    threadlocal_stats_aggregate(&thread_stats);
+  struct thread_stats thread_stats;
+  threadlocal_stats_aggregate(&thread_stats);
 
-    total = 0;
-    for(i = POWER_SMALLEST; i <= power_largest; i++) {
-        slabclass_t *p = &slabclass[i];
-        if (p->slabs != 0) {
-            uint32_t perslab, slabs;
-            slabs = p->slabs;
-            perslab = p->perslab;
+  total = 0;
+  for(i = POWER_SMALLEST; i <= power_largest; i++) {
+  slabclass_t *p = &slabclass[i];
+  if (p->slabs != 0) {
+  uint32_t perslab, slabs;
+  slabs = p->slabs;
+  perslab = p->perslab;
 
-            char key_str[STAT_KEY_LEN];
-            char val_str[STAT_VAL_LEN];
-            int klen = 0, vlen = 0;
+  char key_str[STAT_KEY_LEN];
+  char val_str[STAT_VAL_LEN];
+  int klen = 0, vlen = 0;
 
-            APPEND_NUM_STAT(i, "chunk_size", "%u", p->size);
-            APPEND_NUM_STAT(i, "chunks_per_page", "%u", perslab);
-            APPEND_NUM_STAT(i, "total_pages", "%u", slabs);
-            APPEND_NUM_STAT(i, "total_chunks", "%u", slabs * perslab);
-            APPEND_NUM_STAT(i, "used_chunks", "%u",
-                            slabs*perslab - p->sl_curr - p->end_page_free);
-            APPEND_NUM_STAT(i, "free_chunks", "%u", p->sl_curr);
-            APPEND_NUM_STAT(i, "free_chunks_end", "%u", p->end_page_free);
-            APPEND_NUM_STAT(i, "mem_requested", "%llu",
-                            (unsigned long long)p->requested);
-            APPEND_NUM_STAT(i, "get_hits", "%llu",
-                    (unsigned long long)thread_stats.slab_stats[i].get_hits);
-            APPEND_NUM_STAT(i, "cmd_set", "%llu",
-                    (unsigned long long)thread_stats.slab_stats[i].set_cmds);
-            APPEND_NUM_STAT(i, "delete_hits", "%llu",
-                    (unsigned long long)thread_stats.slab_stats[i].delete_hits);
-            APPEND_NUM_STAT(i, "incr_hits", "%llu",
-                    (unsigned long long)thread_stats.slab_stats[i].incr_hits);
-            APPEND_NUM_STAT(i, "decr_hits", "%llu",
-                    (unsigned long long)thread_stats.slab_stats[i].decr_hits);
-            APPEND_NUM_STAT(i, "cas_hits", "%llu",
-                    (unsigned long long)thread_stats.slab_stats[i].cas_hits);
-            APPEND_NUM_STAT(i, "cas_badval", "%llu",
-                    (unsigned long long)thread_stats.slab_stats[i].cas_badval);
-            APPEND_NUM_STAT(i, "touch_hits", "%llu",
-                    (unsigned long long)thread_stats.slab_stats[i].touch_hits);
-            total++;
-        }
-    }
+  APPEND_NUM_STAT(i, "chunk_size", "%u", p->size);
+  APPEND_NUM_STAT(i, "chunks_per_page", "%u", perslab);
+  APPEND_NUM_STAT(i, "total_pages", "%u", slabs);
+  APPEND_NUM_STAT(i, "total_chunks", "%u", slabs * perslab);
+  APPEND_NUM_STAT(i, "used_chunks", "%u",
+  slabs*perslab - p->sl_curr - p->end_page_free);
+  APPEND_NUM_STAT(i, "free_chunks", "%u", p->sl_curr);
+  APPEND_NUM_STAT(i, "free_chunks_end", "%u", p->end_page_free);
+  APPEND_NUM_STAT(i, "mem_requested", "%llu",
+  (unsigned long long)p->requested);
+  APPEND_NUM_STAT(i, "get_hits", "%llu",
+  (unsigned long long)thread_stats.slab_stats[i].get_hits);
+  APPEND_NUM_STAT(i, "cmd_set", "%llu",
+  (unsigned long long)thread_stats.slab_stats[i].set_cmds);
+  APPEND_NUM_STAT(i, "delete_hits", "%llu",
+  (unsigned long long)thread_stats.slab_stats[i].delete_hits);
+  APPEND_NUM_STAT(i, "incr_hits", "%llu",
+  (unsigned long long)thread_stats.slab_stats[i].incr_hits);
+  APPEND_NUM_STAT(i, "decr_hits", "%llu",
+  (unsigned long long)thread_stats.slab_stats[i].decr_hits);
+  APPEND_NUM_STAT(i, "cas_hits", "%llu",
+  (unsigned long long)thread_stats.slab_stats[i].cas_hits);
+  APPEND_NUM_STAT(i, "cas_badval", "%llu",
+  (unsigned long long)thread_stats.slab_stats[i].cas_badval);
+  APPEND_NUM_STAT(i, "touch_hits", "%llu",
+  (unsigned long long)thread_stats.slab_stats[i].touch_hits);
+  total++;
+  }
+  }
 
 
 
-    APPEND_STAT("active_slabs", "%d", total);
-    APPEND_STAT("total_malloced", "%llu", (unsigned long long)mem_malloced);
-    add_stats(NULL, 0, NULL, 0, c);
-}
+  APPEND_STAT("active_slabs", "%d", total);
+  APPEND_STAT("total_malloced", "%llu", (unsigned long long)mem_malloced);
+  add_stats(NULL, 0, NULL, 0, c);
+  }
 */
 
 static void *memory_allocate(slabs_t* pst, size_t size) {
@@ -353,9 +353,9 @@ void slabs_free(slabs_t* pst, void *ptr, size_t size) {
     do_slabs_free(pst, header, size, id);
 }
 /*
-void slabs_stats(ADD_STAT add_stats, void *c) {
-    pthread_mutex_lock(&slabs_lock);
-    do_slabs_stats(add_stats, c);
-    pthread_mutex_unlock(&slabs_lock);
-}
+  void slabs_stats(ADD_STAT add_stats, void *c) {
+  pthread_mutex_lock(&slabs_lock);
+  do_slabs_stats(add_stats, c);
+  pthread_mutex_unlock(&slabs_lock);
+  }
 */

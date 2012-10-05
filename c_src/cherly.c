@@ -17,7 +17,7 @@ void cherly_init(cherly_t *cherly, int options, unsigned long long max_size) {
 
 // node -> item -> value
 
-void cherly_put(cherly_t *cherly, char *key, int length, void *value, int size, DestroyCallback destroy) {
+void cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, DestroyCallback destroy) {
   //PWord_t PValue;
   lru_item_t * item;
   String skey, sval;
@@ -28,7 +28,8 @@ void cherly_put(cherly_t *cherly, char *key, int length, void *value, int size, 
   char* bufkey = (char*)((char*)buf + sizeof(size_t));
   skey.str = (byte*)bufkey;
   skey.len = length;
-  memcpy(bufkey, key, length); 
+
+  memcpy(bufkey, key, length);
   dprintf("inserting with pos %p keylen %d vallen %d\n", bufkey, length, size);
   //JHSG(PValue, cherly->judy, key, length);
   runtime_mapaccess(&StrMapType, cherly->hm, (byte*)&skey, (byte*)&sval, &exists);
@@ -37,35 +38,36 @@ void cherly_put(cherly_t *cherly, char *key, int length, void *value, int size, 
     dprintf("removing an existing value\n");
     cherly_remove(cherly, lru_item_key(item), lru_item_keylen(item));
   }
-  
+
   if (cherly->size + size > cherly->max_size) {
     dprintf("projected new size %lld is more than max %lld\n", cherly->size + size, cherly->max_size);
     cherly->size -= lru_eject_by_size(cherly->lru, (length + size) - (cherly->max_size - cherly->size), (EjectionCallback)cherly_eject_callback, cherly);
   }
   void* bufval = (void*)(bufkey + length + 1);
-  memcpy(bufval, value, size); 
+  memcpy(bufval, value, size);
   dprintf("inserting with val'pos %p\n", bufval);
   item = lru_insert(cherly->lru, bufkey, length, bufval, size, destroy);
-  
+
   //JHSI(PValue, cherly->judy, key, length);
   sval.str = (byte*)item;
   runtime_mapassign(&StrMapType, cherly->hm, (byte*)&skey, (byte*)&sval);
   cherly->size += lru_item_size(item);
   dprintf("new cherly size is %lld\n", cherly->size);
+
   cherly->items_length++;
 }
 
-void* cherly_get(cherly_t *cherly, char *key, int length, int* vallen) {
+void* cherly_get(cherly_t *cherly, void *key, int length, int* vallen) {
   //PWord_t PValue;
   lru_item_t * item;
   String skey, sval;
   bool exists;
-  
+
   //JHSG(PValue, cherly->judy, key, length);
   skey.str = (byte*)key;
-  skey.len = length; 
+  skey.len = length;
   runtime_mapaccess(&StrMapType, cherly->hm, (byte*)&skey, (byte*)&sval, &exists);
-  
+
   if (!exists) {
     return nil;
   } else {
@@ -88,17 +90,17 @@ static void cherly_eject_callback(cherly_t *cherly, char *key, int length) {
   String skey, sval;
   bool exists;
   int32 ret;
-  
+
   //JHSG(PValue, cherly->judy, key, length);
   skey.str = (byte*)key;
-  skey.len = length; 
+  skey.len = length;
   runtime_mapaccess(&StrMapType, cherly->hm, (byte*)&skey, (byte*)&sval, &exists);
   if (!exists) {
     return;
   }
   item = (lru_item_t*)sval.str;
   cherly_slab_free(&cherly->slab, lru_item_key(item));
-  
+
   //JHSD(ret, cherly->judy, key, length);
   ret = runtime_mapassign(&StrMapType, cherly->hm, (byte*)&skey, nil);
   if (ret) {
@@ -107,21 +109,21 @@ static void cherly_eject_callback(cherly_t *cherly, char *key, int length) {
   }
 }
 
-void cherly_remove(cherly_t *cherly, char *key, int length) {
+void cherly_remove(cherly_t *cherly, void *key, int length) {
   //PWord_t PValue;
   lru_item_t *item;
   String skey, sval;
   bool exists;
-  
+
   //JHSG(PValue, cherly->judy, key, length);
   skey.str = (byte*)key;
-  skey.len = length; 
+  skey.len = length;
   runtime_mapaccess(&StrMapType, cherly->hm, (byte*)&skey, (byte*)&sval, &exists);
-  
+
   if (!exists) {
     return;
   }
-  
+
   item = (lru_item_t *)sval.str;
   cherly_slab_free(&cherly->slab, lru_item_key(item));
 
