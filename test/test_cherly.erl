@@ -69,13 +69,28 @@ put_plural_objects_test() ->
     ?assertEqual(Size,  cherly:size(C)),
     cherly:stop(C).
 
-put_term_test() ->
-    C = cherly:start(10000),
+put_term_key_test() ->
+    C = cherly:start(1000),
     K = term_to_binary({1234567890, "server/erlang"}),
     V = <<"LEOFS">>,
     Len = byte_size(K) + byte_size(V),
 
-    true = cherly:put(C, K, V),
+    ok = cherly:put(C, K, V),
+    V = cherly:get(C, K),
+
+    ?assertEqual(1,   cherly:items(C)),
+    ?assertEqual(Len, cherly:size(C)),
+    cherly:stop(C).
+
+put_including_null_key_test() ->
+    C = cherly:start(1000),
+    H = <<"abcdefghijklmnopqrstuvwxyz">>,
+    T = <<0:64>>,
+    K = <<H/binary,T/binary>>,
+    V = <<"LEOFS">>,
+    Len = byte_size(K) + byte_size(V),
+
+    ok = cherly:put(C, K, V),
     V = cherly:get(C, K),
 
     ?assertEqual(1,   cherly:items(C)),
@@ -87,11 +102,11 @@ put_get_and_remove_test() ->
     K = <<"key">>,
     V = <<"value">>,
 
-    ?assertEqual(none, cherly:get(C, K)),
+    ?assertEqual(not_found, cherly:get(C, K)),
     cherly:put(C, K, V),
     ?assertEqual(V, cherly:get(C, K)),
     cherly:remove(C, K),
-    ?assertEqual(none, cherly:get(C, K)),
+    ?assertEqual(not_found, cherly:get(C, K)),
     ?assertEqual(0, cherly:size(C)),
     cherly:stop(C).
 
@@ -149,7 +164,7 @@ remove_nonexistant_test() ->
     K = <<"key">>,
 
     cherly:remove(C, K),
-    ?assertEqual(none, cherly:get(C, K)),
+    ?assertEqual(not_found, cherly:get(C, K)),
     cherly:stop(C).
 
 double_get_test() ->
