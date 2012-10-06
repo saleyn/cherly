@@ -118,7 +118,7 @@ static ERL_NIF_TERM cherly_nif_get(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
   }
 
   memcpy(bin.data, value, vallen);
-  return enif_make_binary(env, &bin);
+  return enif_make_tuple2(env, atom_ok, enif_make_binary(env, &bin));
 }
 
 

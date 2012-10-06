@@ -43,7 +43,7 @@ simple_test() ->
     Len   = byte_size(K) + byte_size(V),
     cherly:put(C, K, V),
 
-    ?assertEqual(V, cherly:get(C, <<"key">>)),
+    ?assertEqual({ok, V}, cherly:get(C, <<"key">>)),
     ?assertEqual(Len, cherly:size(C)),
     cherly:stop(C).
 
@@ -59,7 +59,7 @@ put_plural_objects_test() ->
                           cherly:put(C, list_to_binary(K), <<"LEOFS">>)
                   end, Keys),
     lists:foreach(fun(K) ->
-                          <<"LEOFS">> = cherly:get(C, list_to_binary(K))
+                          {ok, <<"LEOFS">>} = cherly:get(C, list_to_binary(K))
                   end, Keys),
 
     Items = length(Keys),
@@ -76,7 +76,7 @@ put_term_key_test() ->
     Len = byte_size(K) + byte_size(V),
 
     ok = cherly:put(C, K, V),
-    V = cherly:get(C, K),
+    {ok, V} = cherly:get(C, K),
 
     ?assertEqual(1,   cherly:items(C)),
     ?assertEqual(Len, cherly:size(C)),
@@ -91,7 +91,7 @@ put_including_null_key_test() ->
     Len = byte_size(K) + byte_size(V),
 
     ok = cherly:put(C, K, V),
-    V = cherly:get(C, K),
+    {ok, V} = cherly:get(C, K),
 
     ?assertEqual(1,   cherly:items(C)),
     ?assertEqual(Len, cherly:size(C)),
@@ -104,7 +104,7 @@ put_get_and_remove_test() ->
 
     ?assertEqual(not_found, cherly:get(C, K)),
     cherly:put(C, K, V),
-    ?assertEqual(V, cherly:get(C, K)),
+    ?assertEqual({ok, V}, cherly:get(C, K)),
     cherly:remove(C, K),
     ?assertEqual(not_found, cherly:get(C, K)),
     ?assertEqual(0, cherly:size(C)),
@@ -128,7 +128,7 @@ what_goes_in_must_come_out_test() ->
     K = <<"key">>,
 
     cherly:put(C, K, list_to_binary([<<"val1">>, <<"val2">>])),
-    ?assertEqual(list_to_binary([<<"val1">>, <<"val2">>]), cherly:get(C, K)),
+    ?assertEqual({ok, list_to_binary([<<"val1">>, <<"val2">>])}, cherly:get(C, K)),
     cherly:stop(C).
 
 big_stuff_that_goes_in_must_come_out_test() ->
@@ -138,7 +138,7 @@ big_stuff_that_goes_in_must_come_out_test() ->
     V2 = <<1:524288>>,
 
     cherly:put(C, K, list_to_binary([V1, V2])),
-    Ret = cherly:get(C, K),
+    {ok, Ret} = cherly:get(C, K),
     ?assertEqual(list_to_binary([V1,V2]), Ret),
     cherly:stop(C).
 
@@ -148,7 +148,7 @@ put_one_thing_in_no_list_big_test() ->
     V = <<0:524288>>,
 
     cherly:put(C, K, V),
-    ?assertEqual(V, cherly:get(C, K)),
+    ?assertEqual({ok, V}, cherly:get(C, K)),
     cherly:stop(C).
 
 put_one_thing_in_no_list_small_test() ->
@@ -156,7 +156,7 @@ put_one_thing_in_no_list_small_test() ->
     K = <<"key">>,
     V = <<1:8>>,
     cherly:put(C, K, V),
-    ?assertEqual(V, cherly:get(C, K)),
+    ?assertEqual({ok, V}, cherly:get(C, K)),
     cherly:stop(C).
 
 remove_nonexistant_test() ->
@@ -182,8 +182,8 @@ double_get_test() ->
                           65,217,241,234,237,58,216,34,245,253,153,140,190,186,
                           24,147,240,181,63,222,161,13,217,55,232,254,148>>]),
     cherly:put(C, K, V),
-    ?assertEqual(V, cherly:get(C, K)),
-    ?assertEqual(V, cherly:get(C, K)),
+    ?assertEqual({ok, V}, cherly:get(C, K)),
+    ?assertEqual({ok, V}, cherly:get(C, K)),
     cherly:stop(C).
 
 
