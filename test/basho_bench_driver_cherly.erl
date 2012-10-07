@@ -39,7 +39,7 @@ new(_Id) ->
             void
     end,
 
-    C = cherly:start(1073741824), %% @TODO - default:1GB
+    {ok, C} = cherly:start(1073741824), %% @TODO - default:1GB
     {ok, #state{handler = C}}.
 
 

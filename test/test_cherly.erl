@@ -37,18 +37,18 @@
 -ifdef(EUNIT).
 
 simple_test() ->
-    C = cherly:start(120),
+    {ok, C} = cherly:start(120),
     K = <<"key">>,
     V = <<"value">>,
     Len   = byte_size(K) + byte_size(V),
     cherly:put(C, K, V),
 
-    ?assertEqual({ok, V}, cherly:get(C, <<"key">>)),
-    ?assertEqual(Len, cherly:size(C)),
+    ?assertEqual({ok, V},   cherly:get(C, <<"key">>)),
+    ?assertEqual({ok, Len}, cherly:size(C)),
     cherly:stop(C).
 
 put_plural_objects_test() ->
-    C = cherly:start(10000),
+    {ok, C} = cherly:start(10000),
     Keys = ["A","B","C","D","E","F",
             "G","H","I","J","K","L",
             "M","N","O","P","Q","R",
@@ -65,12 +65,12 @@ put_plural_objects_test() ->
     Items = length(Keys),
     Size  = Items + (Items * 5),
 
-    ?assertEqual(Items, cherly:items(C)),
-    ?assertEqual(Size,  cherly:size(C)),
+    ?assertEqual({ok, Items}, cherly:items(C)),
+    ?assertEqual({ok, Size},  cherly:size(C)),
     cherly:stop(C).
 
 put_term_key_test() ->
-    C = cherly:start(1000),
+    {ok, C} = cherly:start(1000),
     K = term_to_binary({1234567890, "server/erlang"}),
     V = <<"LEOFS">>,
     Len = byte_size(K) + byte_size(V),
@@ -78,12 +78,12 @@ put_term_key_test() ->
     ok = cherly:put(C, K, V),
     {ok, V} = cherly:get(C, K),
 
-    ?assertEqual(1,   cherly:items(C)),
-    ?assertEqual(Len, cherly:size(C)),
+    ?assertEqual({ok, 1},   cherly:items(C)),
+    ?assertEqual({ok, Len}, cherly:size(C)),
     cherly:stop(C).
 
 put_including_null_key_test() ->
-    C = cherly:start(1000),
+    {ok, C} = cherly:start(1000),
     H = <<"abcdefghijklmnopqrstuvwxyz">>,
     T = <<0:64>>,
     K = <<H/binary,T/binary>>,
@@ -93,12 +93,12 @@ put_including_null_key_test() ->
     ok = cherly:put(C, K, V),
     {ok, V} = cherly:get(C, K),
 
-    ?assertEqual(1,   cherly:items(C)),
-    ?assertEqual(Len, cherly:size(C)),
+    ?assertEqual({ok, 1},   cherly:items(C)),
+    ?assertEqual({ok, Len}, cherly:size(C)),
     cherly:stop(C).
 
 put_get_and_remove_test() ->
-    C = cherly:start(120),
+    {ok, C} = cherly:start(120),
     K = <<"key">>,
     V = <<"value">>,
 
@@ -107,11 +107,11 @@ put_get_and_remove_test() ->
     ?assertEqual({ok, V}, cherly:get(C, K)),
     cherly:remove(C, K),
     ?assertEqual(not_found, cherly:get(C, K)),
-    ?assertEqual(0, cherly:size(C)),
+    ?assertEqual({ok, 0}, cherly:size(C)),
     cherly:stop(C).
 
 put_with_lru_eject_test() ->
-    C = cherly:start(70),
+    {ok, C} = cherly:start(70),
     V = <<"value">>,
     lists:foldl(fun(_, Str) ->
                         Mod = list_to_binary(succ(Str)),
@@ -120,11 +120,11 @@ put_with_lru_eject_test() ->
                         binary_to_list(Mod)
                 end, "abc", lists:seq(1, 10)),
     ?debugVal(cherly:size(C)),
-    ?assertEqual(8, cherly:items(C)),
+    ?assertEqual({ok, 8}, cherly:items(C)),
     cherly:stop(C).
 
 what_goes_in_must_come_out_test() ->
-    C = cherly:start(120),
+    {ok, C} = cherly:start(120),
     K = <<"key">>,
 
     cherly:put(C, K, list_to_binary([<<"val1">>, <<"val2">>])),
@@ -132,7 +132,7 @@ what_goes_in_must_come_out_test() ->
     cherly:stop(C).
 
 big_stuff_that_goes_in_must_come_out_test() ->
-    C = cherly:start(1048576),
+    {ok, C} = cherly:start(1048576),
     K = <<"key">>,
     V1 = <<0:524288>>,
     V2 = <<1:524288>>,
@@ -143,7 +143,7 @@ big_stuff_that_goes_in_must_come_out_test() ->
     cherly:stop(C).
 
 put_one_thing_in_no_list_big_test() ->
-    C = cherly:start(1048576),
+    {ok, C} = cherly:start(1048576),
     K = <<"key">>,
     V = <<0:524288>>,
 
@@ -152,7 +152,7 @@ put_one_thing_in_no_list_big_test() ->
     cherly:stop(C).
 
 put_one_thing_in_no_list_small_test() ->
-    C = cherly:start(1048576),
+    {ok, C} = cherly:start(1048576),
     K = <<"key">>,
     V = <<1:8>>,
     cherly:put(C, K, V),
@@ -160,7 +160,7 @@ put_one_thing_in_no_list_small_test() ->
     cherly:stop(C).
 
 remove_nonexistant_test() ->
-    C = cherly:start(120),
+    {ok, C} = cherly:start(120),
     K = <<"key">>,
 
     cherly:remove(C, K),
@@ -169,7 +169,7 @@ remove_nonexistant_test() ->
 
 double_get_test() ->
     %% outputv modifies the iovec with a skipsize.  That's fucking rad
-    C = cherly:start(1123123),
+    {ok, C} = cherly:start(1123123),
     K = <<"aczup">>,
     V = list_to_binary([<<131,108,0,0,0,1,104,2,107,0,9,60,48,46,52,55,50,46,48,
                           62,99,49,46,50,51,54,53,51,49,53,54,49,57,53,57,56,55,

@@ -52,7 +52,8 @@ static ERL_NIF_TERM cherly_nif_init(ErlNifEnv* env, int argc, const ERL_NIF_TERM
   term = enif_make_resource(env, obj);
   cherly_init(obj, 0, max_size);
   enif_release_resource(obj);
-  return term;
+
+  return enif_make_tuple2(env, atom_ok, term);
 }
 
 
@@ -204,7 +205,7 @@ static ERL_NIF_TERM cherly_nif_size(ErlNifEnv* env, int argc, const ERL_NIF_TERM
   }
 
   size = cherly_size(obj);
-  return enif_make_uint64(env, size);
+  return enif_make_tuple2(env, atom_ok, enif_make_uint64(env, size));
 }
 
 
@@ -227,7 +228,7 @@ static ERL_NIF_TERM cherly_nif_items(ErlNifEnv* env, int argc, const ERL_NIF_TER
   }
 
   len = cherly_items_length(obj);
-  return enif_make_uint64(env, len);
+  return enif_make_tuple2(env, atom_ok, enif_make_uint64(env, len));
 }
 
 
