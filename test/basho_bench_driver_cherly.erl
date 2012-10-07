@@ -39,7 +39,11 @@ new(_Id) ->
             void
     end,
 
-    {ok, C} = cherly:start(1073741824), %% @TODO - default:1GB
+    CacheCapacity = basho_bench_config:get(
+                      cache_capacity, 1073741824), %% default:1GB
+    io:format("Cache capacity: ~w\n", [CacheCapacity]),
+
+    {ok, C} = cherly:start(CacheCapacity),
     {ok, #state{handler = C}}.
 
 
