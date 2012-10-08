@@ -39,7 +39,7 @@ init() ->
 %% @doc Launch cherly
 %%
 -spec(start(integer()) ->
-             any()).
+             {ok, any()}).
 start(_Size) ->
     exit(nif_library_not_loaded).
 
@@ -47,7 +47,7 @@ start(_Size) ->
 %% @doc Insert an object into the cherly
 %%
 -spec(put(any(), binary(), binary()) ->
-             boolean() | {error, any()}).
+             ok | {error, any()}).
 put(_Res, _Key, _Value) ->
     exit(nif_library_not_loaded).
 
@@ -55,14 +55,14 @@ put(_Res, _Key, _Value) ->
 %% @doc Retrieve an object from the cherly
 %%
 -spec(get(any(), binary()) ->
-             binary() | {error, any()}).
+             {ok, binary()} | not_found | {error, any()}).
 get(_Res, _Key) ->
     exit(nif_library_not_loaded).
 
 %% @doc Remove an object from the cherly
 %%
 -spec(remove(any(), binary()) ->
-             boolean() | {error, any()}).
+             ok | {error, any()}).
 remove(_Res, _Key) ->
     exit(nif_library_not_loaded).
 
@@ -70,14 +70,14 @@ remove(_Res, _Key) ->
 %% @doc Retrieve size of cached objects
 %%
 -spec(size(any()) ->
-             integer() | {error, any()}).
+             {ok, integer()} | {error, any()}).
 size(_Res) ->
     exit(nif_library_not_loaded).
 
 %% @doc Retrieve total of cached objects
 %%
 -spec(items(any()) ->
-             integer() | {error, any()}).
+             {ok, integer()} | {error, any()}).
 items(_Res) ->
     exit(nif_library_not_loaded).
 
@@ -85,7 +85,7 @@ items(_Res) ->
 %% @doc Halt the cherly
 %%
 -spec(stop(any()) ->
-             boolean() | {error, any()}).
+             ok | {error, any()}).
 stop(_Res) ->
     exit(nif_library_not_loaded).
 
