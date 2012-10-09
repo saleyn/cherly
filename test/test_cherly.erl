@@ -25,7 +25,9 @@
 %%====================================================================
 -module(test_cherly).
 -author('Yoshiyuki Kanno').
+-author('Yosuke Hara').
 
+-include("cherly.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
 -export([succ/1, fast_acc/3, time_to_epoch_float/1]).
@@ -185,6 +187,40 @@ double_get_test() ->
     ?assertEqual({ok, V}, cherly:get(C, K)),
     ?assertEqual({ok, V}, cherly:get(C, K)),
     cherly:stop(C).
+
+server_test() ->
+    K = <<"KEY-1">>,
+    V = <<"VALUE-1">>,
+
+    application:start(cherly),
+    ok = cherly_server:put(K, V),
+    {ok, V}  = cherly_server:get(K),
+    {ok, 1}  = cherly_server:items(),
+    {ok, 12} = cherly_server:size(),
+
+    {ok, Stats1} = cherly_server:stats(),
+    ?assertEqual(#cache_stats{gets = 1,
+                              puts = 1,
+                              dels = 0,
+                              hits = 1,
+                              records = 1,
+                              cached_size = 12}, Stats1),
+
+    ok = cherly_server:delete(K),
+    {ok, Stats2} = cherly_server:stats(),
+    ?assertEqual(#cache_stats{gets = 1,
+                              puts = 1,
+                              dels = 1,
+                              hits = 1,
+                              records = 0,
+                              cached_size = 0}, Stats2),
+
+    {ok, 0} = cherly_server:items(),
+    {ok, 0} = cherly_server:size(),
+
+    cherly_server:stop(),
+    application:stop(cherly),
+    ok.
 
 
 %%--------------------------------------------------------------------
