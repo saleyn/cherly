@@ -1,4 +1,4 @@
 ebin
 priv/
-c/*.o
+c_src/*.o
 .eunit/
