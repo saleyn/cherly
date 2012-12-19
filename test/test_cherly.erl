@@ -169,6 +169,17 @@ remove_nonexistant_test() ->
     ?assertEqual(not_found, cherly:get(C, K)),
     cherly:stop(C).
 
+put_bigger_thing_than_1MB_test() ->
+    {ok, C} = cherly:start(1024 * 1024 * 5),
+    K = <<"key">>,
+    V = crypto:rand_bytes(1024 * 1024 * 2),
+    cherly:put(C, K, V),
+    cherly:remove(C, K),
+    ?assertEqual(not_found, cherly:get(C, K)),
+    {ok, 0}  = cherly:items(C),
+    {ok, 0} = cherly:size(C),
+    cherly:stop(C).
+
 double_get_test() ->
     %% outputv modifies the iovec with a skipsize.  That's fucking rad
     {ok, C} = cherly:start(1123123),
