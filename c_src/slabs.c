@@ -342,6 +342,9 @@ void *slabs_alloc(slabs_t* pst, size_t size) {
     size += sizeof(slabheader_t);
     unsigned int id = slabs_clsid(pst, size);
     ret = do_slabs_alloc(pst, size, id);
+    if (ret == NULL) {
+        return NULL;
+    }
     return (void*)((char*)ret + sizeof(slabheader_t));
 }
 
