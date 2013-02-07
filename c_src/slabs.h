@@ -5,13 +5,19 @@
 #include "runtime.h"
 
 #define		SETTING_CHUNK_SIZE	128
-#define		SETTING_ITEM_SIZE_MAX	1024 * 1024 * 10
+#define		SETTING_ITEM_SIZE_MAX	1024 * 1024 * 8
 #define		POWER_LARGEST		200
 #define		MAX_NUMBER_OF_SLAB_CLASSES	(POWER_LARGEST + 1)
 #define		POWER_SMALLEST		1
 #define		CHUNK_ALIGN_BYTES	8
 #define		SETTING_VERBOSE		2
 #define		MAX_NUMBER_OF_SLAB_CLASSES	(POWER_LARGEST + 1)
+
+typedef struct slablist {
+    void *ptr;
+    unsigned char *used_bitmap; // using perslab/8
+    struct slablist *next;
+} slablist_t;
 
 typedef struct {
     unsigned int size;      /* sizes of items */
@@ -25,7 +31,8 @@ typedef struct {
 
     unsigned int slabs;     /* how many slabs were allocated for this class */
 
-    void **slab_list;       /* array of slab pointers */
+    //@TODO void **slab_list;       /* array of slab pointers */
+    slablist_t *slab_list;       /* array of slab pointers */
     unsigned int list_size; /* size of prev array */
 
     unsigned int killing;  /* index+1 of dying slab, or zero if none */
@@ -40,6 +47,7 @@ typedef struct {
 	void *mem_base;
 	void *mem_current;
 	size_t mem_avail;
+	void *pool_freelist;
 } slabs_t;
 /** Init the subsystem. 1st argument is the limit on no. of bytes to allocate,
     0 if no limit. 2nd argument is the growth factor; each slab will use a chunk

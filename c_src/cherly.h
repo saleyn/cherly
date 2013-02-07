@@ -20,7 +20,7 @@ typedef struct _cherly_t {
 
 void cherly_init(cherly_t *cherly, int options, unsigned long long max_size);
 void * cherly_get(cherly_t *cherly, void * key, int length, int* vallen);
-void cherly_put(cherly_t *cherly, void * key, int length, void *value, int size, DestroyCallback);
+bool cherly_put(cherly_t *cherly, void * key, int length, void *value, int size, DestroyCallback);
 void cherly_remove(cherly_t *cherly, void * key, int length);
 void cherly_destroy(cherly_t *cherly);
 

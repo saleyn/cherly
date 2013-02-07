@@ -21,8 +21,8 @@
 #include <string.h>
 #include <assert.h>
 #include <pthread.h>
+#include <math.h>
 
-//#include "config.h"
 #include "slabs.h"
 
 typedef struct slabheader {
@@ -35,6 +35,124 @@ typedef struct slabheader {
  */
 static int do_slabs_newslab(slabs_t* pst, const unsigned int id);
 static void *memory_allocate(slabs_t* pst, size_t size);
+
+/*
+ * slab pool management
+ */
+static void* pool_new(slabs_t* pst) {
+    void *ptr;
+    slabheader_t *shp;
+    if (pst->pool_freelist == NULL) {
+        ptr = memory_allocate(pst, SETTING_ITEM_SIZE_MAX);
+        if (!ptr) return NULL;
+        shp = (slabheader_t*)ptr;
+        shp->next = NULL;
+        pst->pool_freelist = ptr;
+    }
+    shp = pst->pool_freelist;
+    pst->pool_freelist = shp->next;
+    return (void*)shp;
+}
+
+static void pool_free(slabs_t* pst, void* ptr) {
+    slabheader_t *shp;
+    shp = (slabheader_t*)ptr;
+    shp->next = pst->pool_freelist;
+    pst->pool_freelist = shp;
+}
+
+/*
+ * slab list management per slabclass
+ */
+static bool slab_add(slabs_t* pst, slabclass_t* psct, void* ptr) {
+    size_t need_byte;
+    slablist_t* pslt = (slablist_t*)memory_allocate(pst, sizeof(slablist_t));
+    if (!pslt) return false;
+    need_byte = (size_t)ceil(psct->perslab / 8);
+    pslt->used_bitmap = (unsigned char*)memory_allocate(pst, need_byte);
+    if (!pslt->used_bitmap) return false;
+    memset(pslt->used_bitmap, 0, need_byte);
+    pslt->ptr = ptr;
+    pslt->next = psct->slab_list;
+    psct->slab_list = pslt;
+    return true;
+}
+static void* slab_remove(slabs_t* pst, slabclass_t* psct, slablist_t* pslt_target) {
+    void* pret;
+    slablist_t* pslt = psct->slab_list;
+    slablist_t* pprev = NULL;
+    while (pslt != NULL) {
+        if (pslt == pslt_target) {
+            if (pprev) {
+                pprev->next = pslt->next;
+            } else {
+                psct->slab_list = pslt->next;
+            }
+            pret = pslt->ptr;
+            free(pslt->used_bitmap);
+            free(pslt);
+            return pret;
+        }
+        pprev = pslt;
+        pslt = pslt->next;
+    }
+    return NULL;
+}
+static slablist_t* slab_search(slabs_t* pst, slabclass_t* psct, char* ptr_in_slab) {
+    slablist_t* pslt = psct->slab_list;
+    char* pstart;
+    char* pend;
+    while (pslt != NULL) {
+        pstart = (char*)pslt->ptr;
+        pend = pstart + SETTING_ITEM_SIZE_MAX;
+        if (ptr_in_slab >= pstart && ptr_in_slab <= pend) return pslt;
+        pslt = pslt->next;
+    }
+    return NULL;
+}
+
+/*
+ * slab free space management per slab
+ */
+#define SLABLIST_USED_IDX(pi, pbi, psct, pslt, ptr_in_slab) \
+    size_t byte_offset = (size_t)(ptr_in_slab - ((char*)pslt->ptr)); \
+    *pi = (size_t)(byte_offset / psct->size); \
+    *pbi = (size_t)round(index / 8)
+
+static inline void slablist_used(slabclass_t* psct, slablist_t* pslt, char* ptr_in_slab) {
+    size_t index;
+    size_t bmp_index;
+    SLABLIST_USED_IDX(&index, &bmp_index, psct, pslt, ptr_in_slab);
+    unsigned char bitmask = (unsigned char)(1 << (index % 8));
+    pslt->used_bitmap[bmp_index] |= bitmask;
+}
+static inline void slablist_unused(slabclass_t* psct, slablist_t* pslt, char* ptr_in_slab) {
+    size_t index;
+    size_t bmp_index;
+    SLABLIST_USED_IDX(&index, &bmp_index, psct, pslt, ptr_in_slab);
+    unsigned char bitmask = ~(unsigned char)(1 << (index % 8));
+    pslt->used_bitmap[bmp_index] &= bitmask;
+}
+static inline bool slablist_is_empty(slabclass_t* psct, slablist_t* pslt) {
+    unsigned char* pcurrent = (unsigned char*)pslt->ptr;
+    size_t need_byte = (size_t)ceil(psct->perslab / 8);
+    while (need_byte > 0) {
+        if (need_byte >= sizeof(unsigned int)) {
+            if (*((unsigned int*)pcurrent)) return false;
+            need_byte -= sizeof(unsigned int);
+            pcurrent += sizeof(unsigned int);
+        } else if (need_byte >= sizeof(unsigned short)) {
+            if (*((unsigned short*)pcurrent)) return false;
+            need_byte -= sizeof(unsigned short);
+            pcurrent += sizeof(unsigned short);
+        } else {
+            if (*pcurrent) return false;
+            need_byte -= sizeof(unsigned char);
+            pcurrent += sizeof(unsigned char);
+        }
+    }
+    return true;
+}
 
 /*
  * Figures out which slab class (chunk size) is required to store an item of
@@ -64,6 +182,7 @@ void slabs_init(slabs_t* pst, const size_t limit, const double factor, const boo
     unsigned int size = sizeof(slabheader_t) + SETTING_CHUNK_SIZE;
 
     pst->mem_limit = limit;
+    pst->pool_freelist = NULL;
 
     if (prealloc) {
         /* Allocate everything in a big chunk with malloc */
@@ -120,7 +239,8 @@ static int do_slabs_newslab(slabs_t* pst, const unsigned int id) {
     slabclass_t *p = &pst->slabclass[id];
     //int len = settings.slab_reassign ? settings.item_size_max
     //    : p->size * p->perslab;
-    int len = p->size * p->perslab;
+    //@TODO int len = p->size * p->perslab;
+    int len = SETTING_ITEM_SIZE_MAX;// fixed for reusing by any slabclass
     char *ptr;
 
     if ((pst->mem_limit && pst->mem_malloced + len > pst->mem_limit && p->slabs > 0) ||
@@ -135,7 +255,7 @@ static int do_slabs_newslab(slabs_t* pst, const unsigned int id) {
     p->end_page_ptr = ptr;
     p->end_page_free = p->perslab;
 
-    p->slab_list[p->slabs++] = ptr;
+    //@TODO p->slab_list[p->slabs++] = ptr;
     pst->mem_malloced += len;
     //MEMCACHED_SLABS_SLABCLASS_ALLOCATE(id);
 

@@ -1,4 +1,5 @@
 ebin
 priv/
-c_src/*.o
+*.o
 .eunit/
+c_src/test/suite
