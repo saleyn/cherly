@@ -25,11 +25,6 @@
 
 #include "slabs.h"
 
-typedef struct slabheader {
-	struct slabheader *next;
-	struct slabheader *prev;
-} slabheader_t;
-
 /*
  * Forward Declarations
  */
@@ -39,7 +34,7 @@ static void *memory_allocate(slabs_t* pst, size_t size);
 /*
  * slab pool management
  */
-static void* pool_new(slabs_t* pst) {
+void* pool_new(slabs_t* pst) {
     void *ptr;
     slabheader_t *shp;
     if (pst->pool_freelist == NULL) {
@@ -54,7 +49,7 @@ static void* pool_new(slabs_t* pst) {
     return (void*)shp;
 }
 
-static void pool_free(slabs_t* pst, void* ptr) {
+void pool_free(slabs_t* pst, void* ptr) {
     slabheader_t *shp;
     shp = (slabheader_t*)ptr;
     shp->next = pst->pool_freelist;
@@ -64,7 +59,7 @@ static void pool_free(slabs_t* pst, void* ptr) {
 /*
  * slab list management per slabclass
  */
-static bool slab_add(slabs_t* pst, slabclass_t* psct, void* ptr) {
+bool slab_add(slabs_t* pst, slabclass_t* psct, void* ptr) {
     size_t need_byte;
     slablist_t* pslt = (slablist_t*)memory_allocate(pst, sizeof(slablist_t));
     if (!pslt) return false;
@@ -77,7 +72,8 @@ static bool slab_add(slabs_t* pst, slabclass_t* psct, void* ptr) {
     psct->slab_list = pslt;
     return true;
 }
-static void* slab_remove(slabs_t* pst, slabclass_t* psct, slablist_t* pslt_target) {
+
+void* slab_remove(slabs_t* pst, slabclass_t* psct, slablist_t* pslt_target) {
     void* pret;
     slablist_t* pslt = psct->slab_list;
     slablist_t* pprev = NULL;
@@ -98,7 +94,8 @@ static void* slab_remove(slabs_t* pst, slabclass_t* psct, slablist_t* pslt_targe
     }
     return NULL;
 }
-static slablist_t* slab_search(slabs_t* pst, slabclass_t* psct, char* ptr_in_slab) {
+
+slablist_t* slab_search(slabs_t* pst, slabclass_t* psct, char* ptr_in_slab) {
     slablist_t* pslt = psct->slab_list;
     char* pstart;
     char* pend;
@@ -119,22 +116,24 @@ static slablist_t* slab_search(slabs_t* pst, slabclass_t* psct, char* ptr_in_sla
     *pi = (size_t)(byte_offset / psct->size); \
     *pbi = (size_t)round(index / 8)
 
-static inline void slablist_used(slabclass_t* psct, slablist_t* pslt, char* ptr_in_slab) {
+inline void slablist_used(slabclass_t* psct, slablist_t* pslt, char* ptr_in_slab) {
     size_t index;
     size_t bmp_index;
     SLABLIST_USED_IDX(&index, &bmp_index, psct, pslt, ptr_in_slab);
     unsigned char bitmask = (unsigned char)(1 << (index % 8));
     pslt->used_bitmap[bmp_index] |= bitmask;
 }
-static inline void slablist_unused(slabclass_t* psct, slablist_t* pslt, char* ptr_in_slab) {
+
+inline void slablist_unused(slabclass_t* psct, slablist_t* pslt, char* ptr_in_slab) {
     size_t index;
     size_t bmp_index;
     SLABLIST_USED_IDX(&index, &bmp_index, psct, pslt, ptr_in_slab);
     unsigned char bitmask = ~(unsigned char)(1 << (index % 8));
     pslt->used_bitmap[bmp_index] &= bitmask;
 }
-static inline bool slablist_is_empty(slabclass_t* psct, slablist_t* pslt) {
-    unsigned char* pcurrent = (unsigned char*)pslt->ptr;
+
+inline bool slablist_is_empty(slabclass_t* psct, slablist_t* pslt) {
+    unsigned char* pcurrent = (unsigned char*)pslt->used_bitmap;
     size_t need_byte = (size_t)ceil(psct->perslab / 8);
     while (need_byte > 0) {
         if (need_byte >= sizeof(unsigned int)) {

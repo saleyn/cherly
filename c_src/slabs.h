@@ -13,6 +13,11 @@
 #define		SETTING_VERBOSE		2
 #define		MAX_NUMBER_OF_SLAB_CLASSES	(POWER_LARGEST + 1)
 
+typedef struct slabheader {
+	struct slabheader *next;
+	struct slabheader *prev;
+} slabheader_t;
+
 typedef struct slablist {
     void *ptr;
     unsigned char *used_bitmap; // using perslab/8
@@ -49,6 +54,16 @@ typedef struct {
 	size_t mem_avail;
 	void *pool_freelist;
 } slabs_t;
+
+void* pool_new(slabs_t* pst);
+void pool_free(slabs_t* pst, void* ptr);
+bool slab_add(slabs_t* pst, slabclass_t* psct, void* ptr);
+void* slab_remove(slabs_t* pst, slabclass_t* psct, slablist_t* pslt_target);
+slablist_t* slab_search(slabs_t* pst, slabclass_t* psct, char* ptr_in_slab);
+void slablist_used(slabclass_t* psct, slablist_t* pslt, char* ptr_in_slab);
+void slablist_unused(slabclass_t* psct, slablist_t* pslt, char* ptr_in_slab);
+bool slablist_is_empty(slabclass_t* psct, slablist_t* pslt);
+
 /** Init the subsystem. 1st argument is the limit on no. of bytes to allocate,
     0 if no limit. 2nd argument is the growth factor; each slab will use a chunk
     size equal to the previous slab's chunk size times this factor.
