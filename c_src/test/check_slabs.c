@@ -79,7 +79,7 @@ START_TEST(slab_used_bitmap)
 {  
     slabclass_t* psct = &slab.slabclass[1]; // size:144 perslab:58254
     void* ps = pool_new(&slab);
-    bool ret = slab_add(&slab, psct, ps);
+    slab_add(&slab, psct, ps);
     slablist_t* pslt = psct->slab_list;
     fail_unless(slablist_is_empty(psct, pslt));
     char* pc1 = (char*)(pslt->ptr) + psct->size * 8; // should point to the head of 2byte
@@ -99,17 +99,34 @@ START_TEST(slab_used_bitmap)
 }
 END_TEST
 
+START_TEST(slab_it)
+{  
+    slab.pool_freelist = NULL;
+    void* p1 = slabs_alloc(&slab, 2000000);
+    void* p2 = slabs_alloc(&slab, 2000000);
+    slabs_free(&slab, p1, 2000000);
+    fail_unless(slab.pool_freelist == NULL);
+    slabclass_t* psct = &slab.slabclass[15];
+    fail_unless(psct->slab_list != NULL);
+    fail_unless(psct->slab_list->next == NULL);
+    fail_unless(psct->sl_curr == 1);
+    fail_unless(psct->end_page_ptr != NULL);
+    fail_unless(psct->end_page_free == 1);
+}
+END_TEST
+
 Suite* slabs_suite(void) {
   Suite *s = suite_create("slabs.c");
 
   /* Core test case */
   memset(&slab, 0, sizeof(slab));
-  slabs_init(&slab, 0, 1.5, false);
+  slabs_init(&slab, 0, 2, false);
 
   TCase *tc_core = tcase_create("Core");
   tcase_add_test(tc_core, pool);
   tcase_add_test(tc_core, slablist);
   tcase_add_test(tc_core, slab_used_bitmap);
+  tcase_add_test(tc_core, slab_it);
   suite_add_tcase(s, tc_core);
 
   return s;
