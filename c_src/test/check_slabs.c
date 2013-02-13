@@ -101,6 +101,7 @@ END_TEST
 
 START_TEST(slab_it)
 {  
+    // The freed slab exist at both(slots, end_page)
     slab.pool_freelist = NULL;
     void* p1 = slabs_alloc(&slab, 2000000);
     void* p2 = slabs_alloc(&slab, 2000000);
@@ -112,6 +113,51 @@ START_TEST(slab_it)
     fail_unless(psct->sl_curr == 1);
     fail_unless(psct->end_page_ptr != NULL);
     fail_unless(psct->end_page_free == 1);
+    slabs_free(&slab, p2, 2000000);
+    fail_unless(slab.pool_freelist != NULL);
+    fail_unless(psct->slab_list == NULL);
+    fail_unless(psct->sl_curr == 0);
+    fail_unless(psct->end_page_ptr == NULL);
+    fail_unless(psct->end_page_free == 0);
+    // The freed slab exist at end_page
+    void* p3 = slabs_alloc(&slab, 2000000);
+    fail_unless(p1 == p3);
+    fail_unless(slab.pool_freelist == NULL);
+    fail_unless(psct->slots == NULL);
+    slabs_free(&slab, p3, 2000000);
+    fail_unless(slab.pool_freelist != NULL);
+    slabheader_t *shp = (slabheader_t*)slab.pool_freelist;
+    fail_unless(shp->next == NULL);
+    fail_unless(psct->slab_list == NULL);
+    fail_unless(psct->sl_curr == 0);
+    fail_unless(psct->end_page_ptr == NULL);
+    fail_unless(psct->end_page_free == 0);
+    // The freed slab exist at slots
+    void* p11 = slabs_alloc(&slab, 2000000);
+    void* p12 = slabs_alloc(&slab, 2000000);
+    void* p13 = slabs_alloc(&slab, 2000000);
+    void* p14 = slabs_alloc(&slab, 2000000); // second slab start
+    void* p15 = slabs_alloc(&slab, 2000000);
+    void* p16 = slabs_alloc(&slab, 2000000);
+    fail_unless(psct->end_page_ptr == NULL);
+    fail_unless(psct->end_page_free == 0);
+    fail_unless(psct->slab_list != NULL);
+    fail_unless(psct->slab_list->next != NULL);
+    fail_unless(psct->slab_list->next->next == NULL);
+    slabs_free(&slab, p11, 2000000);
+    slabs_free(&slab, p13, 2000000);
+    slabs_free(&slab, p14, 2000000);
+    slabs_free(&slab, p15, 2000000);
+    fail_unless(psct->slots != NULL);
+    slabs_free(&slab, p16, 2000000);
+    shp = (slabheader_t*)psct->slots;
+    fail_unless((shp + 1) == p13);
+    fail_unless((shp->next + 1) == p11);
+    fail_unless(shp->next->next == NULL);
+    fail_unless(psct->end_page_ptr == NULL);
+    fail_unless(psct->end_page_free == 0);
+    shp = (slabheader_t*)slab.pool_freelist;
+    fail_unless(shp->next == NULL);
 }
 END_TEST
 

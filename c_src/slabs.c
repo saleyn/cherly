@@ -64,7 +64,6 @@ bool slab_add(slabs_t* pst, slabclass_t* psct, void* ptr) {
     slablist_t* pslt = (slablist_t*)memory_allocate(pst, sizeof(slablist_t));
     if (!pslt) return false;
     need_byte = (size_t)ceil(psct->perslab / 8.0);
-printf("[add] pl:%p pl:%d byte:%f \n", pslt, psct->perslab, ceil(psct->perslab / 8.0)); 
     pslt->used_bitmap = (unsigned char*)memory_allocate(pst, need_byte);
     if (!pslt->used_bitmap) return false;
     memset(pslt->used_bitmap, 0, need_byte);
@@ -123,7 +122,6 @@ inline void slablist_used(slabclass_t* psct, slablist_t* pslt, char* ptr_in_slab
     SLABLIST_USED_IDX(&index, &bmp_index, psct, pslt, ptr_in_slab);
     unsigned char bitmask = (unsigned char)(1 << (index % 8));
     pslt->used_bitmap[bmp_index] |= bitmask;
-printf("[add bit] pl:%p idx:%d bidx:%d map:%d \n", pslt, index, bmp_index, pslt->used_bitmap[bmp_index]); 
 }
 
 inline void slablist_unused(slabclass_t* psct, slablist_t* pslt, char* ptr_in_slab) {
@@ -132,13 +130,11 @@ inline void slablist_unused(slabclass_t* psct, slablist_t* pslt, char* ptr_in_sl
     SLABLIST_USED_IDX(&index, &bmp_index, psct, pslt, ptr_in_slab);
     unsigned char bitmask = ~(unsigned char)(1 << (index % 8));
     pslt->used_bitmap[bmp_index] &= bitmask;
-printf("[rm bit] pl:%p idx:%d bidx:%d map:%d \n", pslt, index, bmp_index, pslt->used_bitmap[bmp_index]); 
 }
 
 inline bool slablist_is_empty(slabclass_t* psct, slablist_t* pslt) {
     unsigned char* pcurrent = (unsigned char*)pslt->used_bitmap;
     size_t need_byte = (size_t)ceil(psct->perslab / 8.0);
-printf("[is empty] pl:%p pl:%d byte:%f \n", pslt, psct->perslab, ceil(psct->perslab / 8.0)); 
     while (need_byte > 0) {
         if (need_byte >= sizeof(unsigned int)) {
             if (*((unsigned int*)pcurrent)) return false;
@@ -149,7 +145,6 @@ printf("[is empty] pl:%p pl:%d byte:%f \n", pslt, psct->perslab, ceil(psct->pers
             need_byte -= sizeof(unsigned short);
             pcurrent += sizeof(unsigned short);
         } else {
-printf("[is empty] onebyte check pl:%p byte:%d \n", pslt, *pcurrent); 
             if (*pcurrent) return false;
             need_byte -= sizeof(unsigned char);
             pcurrent += sizeof(unsigned char);
@@ -300,7 +295,6 @@ static void *do_slabs_alloc(slabs_t* pst, const size_t size, unsigned int id) {
         ret = (void *)it;
         pslt = slab_search(pst, p, (char*)ret);
         slablist_used(p, pslt, (char*)ret);
-printf("[add from freelist] pl:%p size:%d perslab:%d addr:%p\n", pslt, p->size, p->perslab, ret); 
     } else {
         /* if we recently allocated a whole page, return from that */
         assert(p->end_page_ptr != NULL);
@@ -312,7 +306,6 @@ printf("[add from freelist] pl:%p size:%d perslab:%d addr:%p\n", pslt, p->size, 
         }
         pslt = slab_search(pst, p, (char*)ret);
         slablist_used(p, pslt, (char*)ret);
-printf("[add from endpage] pl:%p size:%d perslab:%d addr:%p\n", pslt, p->size, p->perslab, ret); 
     }
 
     if (ret) {
@@ -352,10 +345,8 @@ static void do_slabs_free(slabs_t* pst, void *ptr, const size_t size, unsigned i
 
     pslt = slab_search(pst, p, (char*)ptr);
     slablist_unused(p, pslt, (char*)ptr);
-printf("[remove] pl:%p size:%d perslab:%d addr:%p\n", pslt, p->size, p->perslab, ptr); 
     ret = slablist_is_empty(p, pslt);
     if (ret) {
-printf("[empty] pl:%p map:%d \n", pslt, pslt->used_bitmap[0]); 
         // release slab from freelist(slots)
         slabheader_t* pit = it;
         slabheader_t* pprev = NULL;
