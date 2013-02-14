@@ -25,7 +25,7 @@
 -export([new/1,
          run/4]).
 
--record(state, {handler :: binary()}).
+-record(state, {handler :: binary(), check_integrity :: boolean()}).
 
 %% ====================================================================
 %% API
@@ -42,24 +42,45 @@ new(_Id) ->
     CacheCapacity = basho_bench_config:get(
                       cache_capacity, 1073741824), %% default:1GB
     io:format("Cache capacity: ~w\n", [CacheCapacity]),
+    CI = basho_bench_config:get(
+                      check_integrity, false), %% should be false when doing benchmark
+    io:format("Check Integrity: ~p\n", [CI]),
 
     {ok, C} = cherly:start(CacheCapacity),
-    {ok, #state{handler = C}}.
+    {ok, #state{handler = C, check_integrity = CI}}.
 
 
-run(get, KeyGen, _ValueGen, #state{handler = C} = State) ->
-    case cherly:get(C, KeyGen()) of
-        {ok, _Value} ->
-            {ok, State};
+run(get, KeyGen, _ValueGen, #state{handler = C, check_integrity = CI} = State) ->
+    Key = KeyGen(),
+    case cherly:get(C, Key) of
+        {ok, Value} ->
+            case CI of
+                true ->
+                    LocalMD5 = erlang:get(Key),
+                    RemoteMD5 = erlang:md5(Value),
+                    case RemoteMD5 =:= LocalMD5 of
+                        true -> {ok, State};
+                        false -> {error, checksum_error}
+                    end;
+                false -> {ok, State}
+            end;
         not_found ->
             {ok, State};
         {error, Reason} ->
             {error, Reason}
     end;
 
-run(put, KeyGen, ValueGen, #state{handler = C} = State) ->
-    case cherly:put(C, KeyGen(), ValueGen()) of
+run(put, KeyGen, ValueGen, #state{handler = C, check_integrity = CI} = State) ->
+    Key = KeyGen(),
+    Val = ValueGen(),
+    case cherly:put(C, Key, Val) of
         ok ->
+            case CI of
+                true ->
+                    LocalMD5 = erlang:md5(Val),
+                    erlang:put(Key, LocalMD5);
+                false -> void
+            end,
             {ok, State};
         {error, Reason} ->
             {error, Reason}

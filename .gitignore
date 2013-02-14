@@ -1,4 +1,6 @@
 ebin
 priv/
-c_src/*.o
+*.o
+*.swp
 .eunit/
+c_src/test/suite

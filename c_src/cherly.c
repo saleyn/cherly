@@ -24,7 +24,7 @@ void cherly_init(cherly_t *cherly, int options, unsigned long long max_size) {
  * Insert an object into LRU-Storage
  */
 // node -> item -> value
-void cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, DestroyCallback destroy) {
+bool cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, DestroyCallback destroy) {
   lru_item_t * item;
   String skey, sval;
   bool exists;
@@ -33,7 +33,7 @@ void cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, 
   size_t bufsiz = sizeof(size_t) + length + 1 + size;
   void* buf = slabs_alloc(&cherly->slab, bufsiz);
   if (buf == NULL) {
-    return;
+    return false;
   }
   *((size_t*)buf) = bufsiz;
   char* bufkey = (char*)((char*)buf + sizeof(size_t));
@@ -67,6 +67,8 @@ void cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, 
 
   cherly->size += lru_item_size(item);
   cherly->items_length++;
+  return true;
+
 }
 
 
