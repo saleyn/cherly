@@ -19,11 +19,20 @@ Dependencies
 =======
 
 * Runtime
-  
-        Erlang >= R14B
+ * Erlang >= R14B
+ * [Check](http://check.sourceforge.net/) for C Unit tests
 
 Installation
 ========
+* Install `Check` from package systems
+    * deb
+
+        `sudo apt-get install check`
+
+    * rpm
+
+        `sudo yum install check`
+
 * "Cherly" uses the "rebar" build system. Makefile so that simply running "make" at the top level should work.
   * [rebar](https://github.com/basho/rebar)
 * "Cherly" requires Erlang R14B or later.
