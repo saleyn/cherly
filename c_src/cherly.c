@@ -11,7 +11,7 @@ static void cherly_eject_callback(cherly_t *cherly, char *key, int length);
 void cherly_init(cherly_t *cherly, int options, unsigned long long max_size) {
   cherly->hm = runtime_makemap_c(&StrMapType, max_size);
   memset(&cherly->slab, 0, sizeof(slabs_t));
-  slabs_init(&cherly->slab, 0, 2, false);
+  slabs_init(&cherly->slab, 0, 1.5, false);
 
   cherly->lru  = lru_create();
   cherly->size = 0;
@@ -60,6 +60,7 @@ bool cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, 
 
   // Insert an object into lru-storage
   item = lru_insert(cherly->lru, bufkey, length, bufval, size, destroy);
+  if (item == NULL) return false;
 
   // After put-operation
   sval.str = (byte*)item;
