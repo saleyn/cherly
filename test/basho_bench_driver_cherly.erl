@@ -67,7 +67,7 @@ run(get, KeyGen, _ValueGen, #state{handler = C, check_integrity = CI} = State) -
         not_found ->
             {ok, State};
         {error, Reason} ->
-            {error, Reason}
+            {error, Reason, State}
     end;
 
 run(put, KeyGen, ValueGen, #state{handler = C, check_integrity = CI} = State) ->
@@ -83,6 +83,9 @@ run(put, KeyGen, ValueGen, #state{handler = C, check_integrity = CI} = State) ->
             end,
             {ok, State};
         {error, Reason} ->
-            {error, Reason}
+            {error, Reason, State};
+        Other ->
+            io:format("put unexpected result:~p \n", [Other]),
+            {error, Other, State}
     end.
 

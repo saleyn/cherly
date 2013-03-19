@@ -33,7 +33,12 @@ bool cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, 
   size_t bufsiz = sizeof(size_t) + length + 1 + size;
   void* buf = slabs_alloc(&cherly->slab, bufsiz);
   if (buf == NULL) {
-    return false;
+    // retry
+    cherly->size -= lru_eject_by_size(cherly->lru,
+                                      SETTING_ITEM_SIZE_MAX,
+                                      (EjectionCallback)cherly_eject_callback, cherly);
+    buf = slabs_alloc(&cherly->slab, bufsiz);
+    if (buf == NULL) return false;
   }
   *((size_t*)buf) = bufsiz;
   char* bufkey = (char*)((char*)buf + sizeof(size_t));
@@ -48,11 +53,10 @@ bool cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, 
     item = (lru_item_t*)sval.str;
     cherly_remove(cherly, lru_item_key(item), lru_item_keylen(item));
   }
-
-  if (cherly->size + size > cherly->max_size) {
+  if (cherly->size + bufsiz > cherly->max_size) {
     cherly->size -= lru_eject_by_size(cherly->lru,
-                                      (length + size) - (cherly->max_size - cherly->size),
-                                      (EjectionCallback)cherly_eject_callback, cherly);
+                                     (length + size) - (cherly->max_size - cherly->size),
+                                     (EjectionCallback)cherly_eject_callback, cherly);
   }
 
   void* bufval = (void*)(bufkey + length + 1);
