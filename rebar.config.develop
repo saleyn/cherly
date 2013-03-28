@@ -1,0 +1,29 @@
+{require_otp_vsn, "R14B04|R15B02|R15B03|R16B"}.
+
+{erl_opts, [{d, 'NOTEST'},
+            warn_obsolete_guard,
+            warn_unused_import,
+            warnings_as_errors,
+            warn_shadow_vars,
+            warn_export_vars,
+            warn_export_all]}.
+{xref_checks, [undefined_function_calls]}.
+{cover_enabled, true}.
+{clean_files, []}.
+
+{port_specs, [
+    {"priv/cherly.so", ["c_src/*.c"]},
+    {"c_src/test/suite", ["c_src/alg.c", "c_src/cherly.c" , "c_src/double_link.c", "c_src/hashmap.c", "c_src/lru.c", "c_src/runtime.c", "c_src/slabs.c", "c_src/test/*.c"]}
+]}. 
+
+{port_env, [
+             {"CFLAGS", "$CFLAGS -fPIC -g -O2"},
+             {"DRV_CFLAGS", "$DRV_CFLAGS -Wall -Wno-unused-function -Wno-strict-aliasing -Wno-pointer-to-int-cast -Ic_src"},
+             {"DRV_LDFLAGS", "$DRV_LDFLAGS -lm"},
+             {"EXE_CFLAGS", "$EXE_CFLAGS -Wall -Wno-unused-function -Wno-strict-aliasing -Wno-pointer-to-int-cast -Ic_src/ -I/usr/include"},
+             {"EXE_LDFLAGS", "$EXE_LDFLAGS -lm -lcheck"}
+             ]}.
+
+{post_hooks, [
+               {eunit, "c_src/test/suite"}
+             ]}.

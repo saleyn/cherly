@@ -38,8 +38,13 @@ void* pool_new(slabs_t* pst) {
     void *ptr;
     slabheader_t *shp;
     if (pst->pool_freelist == NULL) {
+        if (pst->mem_limit && 
+            (pst->mem_malloced + SETTING_ITEM_SIZE_MAX > pst->mem_limit)) {
+            return NULL;
+        }
         ptr = memory_allocate(pst, SETTING_ITEM_SIZE_MAX);
         if (!ptr) return NULL;
+        pst->mem_malloced += SETTING_ITEM_SIZE_MAX;
         shp = (slabheader_t*)ptr;
         shp->next = NULL;
         pst->pool_freelist = ptr;
@@ -180,7 +185,12 @@ void slabs_init(slabs_t* pst, const size_t limit, const double factor, const boo
     int i = POWER_SMALLEST - 1;
     unsigned int size = sizeof(slabheader_t) + SETTING_CHUNK_SIZE;
 
-    pst->mem_limit = limit;
+    if (limit > 0 && limit < SETTING_ITEM_SIZE_MAX) {
+        pst->mem_limit = SETTING_ITEM_SIZE_MAX;
+    } else {
+        pst->mem_limit = limit;
+    }
+
     pst->pool_freelist = NULL;
 
     if (prealloc) {
@@ -222,50 +232,21 @@ void slabs_init(slabs_t* pst, const size_t limit, const double factor, const boo
 
 }
 
-//static int grow_slab_list (slabs_t* pst, const unsigned int id) {
-//    slabclass_t *p = &pst->slabclass[id];
-//    if (p->slabs == p->list_size) {
-//        size_t new_size =  (p->list_size != 0) ? p->list_size * 2 : 16;
-//        void *new_list = realloc(p->slab_list, new_size * sizeof(void *));
-//        if (new_list == 0) return 0;
-//        p->list_size = new_size;
-//        p->slab_list = new_list;
-//    }
-//    return 1;
-//}
-
 static int do_slabs_newslab(slabs_t* pst, const unsigned int id) {
     slabclass_t *p = &pst->slabclass[id];
-    //int len = settings.slab_reassign ? settings.item_size_max
-    //    : p->size * p->perslab;
-    //@TODO int len = p->size * p->perslab;
-/*
-    int len = SETTING_ITEM_SIZE_MAX;// fixed for reusing by any slabclass
-    char *ptr;
-
-    if ((pst->mem_limit && pst->mem_malloced + len > pst->mem_limit && p->slabs > 0) ||
-        (grow_slab_list(pst, id) == 0) ||
-        ((ptr = memory_allocate(pst, (size_t)len)) == 0)) {
-
-        return 0;
-    }
-*/
+    
     void* ptr = pool_new(pst);
     if (ptr == NULL) return 0;
-    //memset(ptr, 0, (size_t)len);
+
     p->end_page_ptr = ptr;
     p->end_page_free = p->perslab;
 
-    //@TODO p->slab_list[p->slabs++] = ptr;
     bool ret = slab_add(pst, p, ptr);
     if (!ret) return 0;
-    pst->mem_malloced += SETTING_ITEM_SIZE_MAX;
-    //MEMCACHED_SLABS_SLABCLASS_ALLOCATE(id);
 
     return 1;
 }
 
-/*@null@*/
 static void *do_slabs_alloc(slabs_t* pst, const size_t size, unsigned int id) {
     slabclass_t *p;
     void *ret = NULL;
@@ -278,7 +259,7 @@ static void *do_slabs_alloc(slabs_t* pst, const size_t size, unsigned int id) {
     }
 
     p = &pst->slabclass[id];
-    //assert(p->sl_curr == 0 || ((slabheader_t*)p->slots)->slabs_clsid == 0);
+    //printf("alloc slab:%p class:%u ent_page_p:%p sl_curr:%u \n", pst, p->size, p->end_page_ptr, p->sl_curr);
 
     /* fail unless we have space at the end of a recently allocated page,
        we have something on our freelist, or we could allocate a new page */
@@ -342,6 +323,8 @@ static void do_slabs_free(slabs_t* pst, void *ptr, const size_t size, unsigned i
 
     p->sl_curr++;
     p->requested -= size;
+
+    //printf("free slab:%p class:%u ent_page_p:%p sl_curr:%u \n", pst, p->size, p->end_page_ptr, p->sl_curr);
 
     pslt = slab_search(pst, p, (char*)ptr);
     slablist_unused(p, pslt, (char*)ptr);

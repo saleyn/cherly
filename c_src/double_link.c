@@ -4,6 +4,7 @@
 
 d_list_t * d_list_create() {
   d_list_t * list = malloc(sizeof(d_list_t));
+  if (list == NULL) return NULL;
   list->head = NULL;
   list->tail = NULL;
   list->size = 0;
@@ -114,6 +115,7 @@ d_node_t * d_node_create(void *data) {
   d_node_t * node;
   
   node = malloc(sizeof(d_node_t));
+  if (node == NULL) return NULL;
   node->previous = NULL;
   node->next = NULL;
   node->data = data;

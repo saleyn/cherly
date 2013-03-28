@@ -11,7 +11,7 @@ static void cherly_eject_callback(cherly_t *cherly, char *key, int length);
 void cherly_init(cherly_t *cherly, int options, unsigned long long max_size) {
   cherly->hm = runtime_makemap_c(&StrMapType, max_size);
   memset(&cherly->slab, 0, sizeof(slabs_t));
-  slabs_init(&cherly->slab, 0, 2, false);
+  slabs_init(&cherly->slab, max_size, 1.5, false);
 
   cherly->lru  = lru_create();
   cherly->size = 0;
@@ -33,7 +33,12 @@ bool cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, 
   size_t bufsiz = sizeof(size_t) + length + 1 + size;
   void* buf = slabs_alloc(&cherly->slab, bufsiz);
   if (buf == NULL) {
-    return false;
+    // retry
+    cherly->size -= lru_eject_by_size(cherly->lru,
+                                      SETTING_ITEM_SIZE_MAX,
+                                      (EjectionCallback)cherly_eject_callback, cherly);
+    buf = slabs_alloc(&cherly->slab, bufsiz);
+    if (buf == NULL) return false;
   }
   *((size_t*)buf) = bufsiz;
   char* bufkey = (char*)((char*)buf + sizeof(size_t));
@@ -48,11 +53,10 @@ bool cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, 
     item = (lru_item_t*)sval.str;
     cherly_remove(cherly, lru_item_key(item), lru_item_keylen(item));
   }
-
-  if (cherly->size + size > cherly->max_size) {
+  if (cherly->size + bufsiz > cherly->max_size) {
     cherly->size -= lru_eject_by_size(cherly->lru,
-                                      (length + size) - (cherly->max_size - cherly->size),
-                                      (EjectionCallback)cherly_eject_callback, cherly);
+                                     (length + size) - (cherly->max_size - cherly->size),
+                                     (EjectionCallback)cherly_eject_callback, cherly);
   }
 
   void* bufval = (void*)(bufkey + length + 1);
@@ -60,6 +64,7 @@ bool cherly_put(cherly_t *cherly, void *key, int length, void *value, int size, 
 
   // Insert an object into lru-storage
   item = lru_insert(cherly->lru, bufkey, length, bufval, size, destroy);
+  if (item == NULL) return false;
 
   // After put-operation
   sval.str = (byte*)item;

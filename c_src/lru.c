@@ -8,6 +8,7 @@ static void lru_destroy_item(lru_item_t *item);
 
 lru_t * lru_create() {
   lru_t * lru = malloc(sizeof(lru_t));
+  if (lru == NULL) return NULL;
   lru->list = d_list_create();
   return lru;
 }
@@ -58,6 +59,7 @@ lru_item_t * lru_insert(lru_t *lru, char* key, int keylen, void * value, int siz
   lru_item_t *item;
   
   item = malloc(sizeof(lru_item_t));
+  if (item == NULL) return NULL;
   item->key = key;
   item->keylen = keylen;
   item->value = value;

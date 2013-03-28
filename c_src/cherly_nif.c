@@ -29,7 +29,6 @@ static ERL_NIF_TERM atom_ok;
 static ERL_NIF_TERM atom_error;
 static ERL_NIF_TERM atom_oom;
 static ERL_NIF_TERM atom_not_found;
-static ERL_NIF_TERM tuple_error_oom;
 
 
 /**
@@ -156,7 +155,7 @@ static ERL_NIF_TERM cherly_nif_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
   }
 
   ret = cherly_put(obj, keybin.data, keybin.size, bin.data, bin.size, NULL);
-  return ret ? atom_ok : tuple_error_oom;
+  return ret ? atom_ok : enif_make_tuple2(env, atom_error, atom_oom);
 }
 
 
@@ -250,9 +249,8 @@ static int onload(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info) {
   *priv_data = (void*)pert;
   atom_ok = enif_make_atom(env, "ok");
   atom_error = enif_make_atom(env, "error");
-  atom_oom = enif_make_atom(env, "oom");
+  atom_oom = enif_make_atom(env, "out of memory");
   atom_not_found = enif_make_atom(env, "not_found");
-  tuple_error_oom = enif_make_tuple2(env, atom_error, atom_oom);
   return 0;
 }
 

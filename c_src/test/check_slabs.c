@@ -103,28 +103,28 @@ START_TEST(slab_it)
 {  
     // The freed slab exist at both(slots, end_page)
     slab.pool_freelist = NULL;
-    void* p1 = slabs_alloc(&slab, 2000000);
-    void* p2 = slabs_alloc(&slab, 2000000);
-    slabs_free(&slab, p1, 2000000);
+    void* p1 = slabs_alloc(&slab, 1000000);
+    void* p2 = slabs_alloc(&slab, 1000000);
+    slabs_free(&slab, p1, 1000000);
     fail_unless(slab.pool_freelist == NULL);
-    slabclass_t* psct = &slab.slabclass[15];
+    slabclass_t* psct = &slab.slabclass[14];
     fail_unless(psct->slab_list != NULL);
     fail_unless(psct->slab_list->next == NULL);
     fail_unless(psct->sl_curr == 1);
     fail_unless(psct->end_page_ptr != NULL);
     fail_unless(psct->end_page_free == 1);
-    slabs_free(&slab, p2, 2000000);
+    slabs_free(&slab, p2, 1000000);
     fail_unless(slab.pool_freelist != NULL);
     fail_unless(psct->slab_list == NULL);
     fail_unless(psct->sl_curr == 0);
     fail_unless(psct->end_page_ptr == NULL);
     fail_unless(psct->end_page_free == 0);
     // The freed slab exist at end_page
-    void* p3 = slabs_alloc(&slab, 2000000);
+    void* p3 = slabs_alloc(&slab, 1000000);
     fail_unless(p1 == p3);
     fail_unless(slab.pool_freelist == NULL);
     fail_unless(psct->slots == NULL);
-    slabs_free(&slab, p3, 2000000);
+    slabs_free(&slab, p3, 1000000);
     fail_unless(slab.pool_freelist != NULL);
     slabheader_t *shp = (slabheader_t*)slab.pool_freelist;
     fail_unless(shp->next == NULL);
@@ -133,23 +133,23 @@ START_TEST(slab_it)
     fail_unless(psct->end_page_ptr == NULL);
     fail_unless(psct->end_page_free == 0);
     // The freed slab exist at slots
-    void* p11 = slabs_alloc(&slab, 2000000);
-    void* p12 = slabs_alloc(&slab, 2000000);
-    void* p13 = slabs_alloc(&slab, 2000000);
-    void* p14 = slabs_alloc(&slab, 2000000); // second slab start
-    void* p15 = slabs_alloc(&slab, 2000000);
-    void* p16 = slabs_alloc(&slab, 2000000);
+    void* p11 = slabs_alloc(&slab, 1000000);
+    void* p12 = slabs_alloc(&slab, 1000000);
+    void* p13 = slabs_alloc(&slab, 1000000);
+    void* p14 = slabs_alloc(&slab, 1000000); // second slab start
+    void* p15 = slabs_alloc(&slab, 1000000);
+    void* p16 = slabs_alloc(&slab, 1000000);
     fail_unless(psct->end_page_ptr == NULL);
     fail_unless(psct->end_page_free == 0);
     fail_unless(psct->slab_list != NULL);
     fail_unless(psct->slab_list->next != NULL);
     fail_unless(psct->slab_list->next->next == NULL);
-    slabs_free(&slab, p11, 2000000);
-    slabs_free(&slab, p13, 2000000);
-    slabs_free(&slab, p14, 2000000);
-    slabs_free(&slab, p15, 2000000);
+    slabs_free(&slab, p11, 1000000);
+    slabs_free(&slab, p13, 1000000);
+    slabs_free(&slab, p14, 1000000);
+    slabs_free(&slab, p15, 1000000);
     fail_unless(psct->slots != NULL);
-    slabs_free(&slab, p16, 2000000);
+    slabs_free(&slab, p16, 1000000);
     shp = (slabheader_t*)psct->slots;
     fail_unless((shp + 1) == p13);
     fail_unless((shp->next + 1) == p11);
@@ -158,6 +158,34 @@ START_TEST(slab_it)
     fail_unless(psct->end_page_free == 0);
     shp = (slabheader_t*)slab.pool_freelist;
     fail_unless(shp->next == NULL);
+    void* p17 = slabs_alloc(&slab, 1000000);
+    fail_unless(p17 == p13);
+}
+END_TEST
+
+START_TEST(slab_exceed_limit)
+{  
+    void* p1;
+    int i;
+    slabs_t slab_ex;
+    const size_t EXPECTED_MAX_ITEM = 4;
+    const size_t ALLOC_SIZE = SETTING_ITEM_SIZE_MAX - sizeof(slabheader_t);
+    memset(&slab_ex, 0, sizeof(slabs_t));
+    fprintf(stderr, "do exceed pst:%p\n", &slab_ex);
+    slabs_init(&slab_ex, SETTING_ITEM_SIZE_MAX * EXPECTED_MAX_ITEM, 2, false);
+    for (i = 0; i < EXPECTED_MAX_ITEM; i++) {
+        p1 = slabs_alloc(&slab_ex, ALLOC_SIZE);
+        fail_unless(p1 != NULL);
+    }
+    void* p2 = slabs_alloc(&slab_ex, ALLOC_SIZE);
+    fail_unless(p2 == NULL);
+    slabs_free(&slab_ex, p1, ALLOC_SIZE);
+    // success if request size belongs to the above same slab
+    void* p3 = slabs_alloc(&slab_ex, ALLOC_SIZE);
+    fail_unless(p3 != NULL);
+    // fail if request size belongs to a different slab
+    void* p4 = slabs_alloc(&slab_ex, 512);
+    fail_unless(p4 == NULL);
 }
 END_TEST
 
@@ -173,6 +201,7 @@ Suite* slabs_suite(void) {
   tcase_add_test(tc_core, slablist);
   tcase_add_test(tc_core, slab_used_bitmap);
   tcase_add_test(tc_core, slab_it);
+  tcase_add_test(tc_core, slab_exceed_limit);
   suite_add_tcase(s, tc_core);
 
   return s;
