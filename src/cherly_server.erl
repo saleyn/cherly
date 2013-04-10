@@ -35,7 +35,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 %% API
--export([start_link/1, stop/0, get/1, put/2, delete/1, stats/0, items/0, size/0]).
+-export([start_link/2, stop/1,
+         get/2, put/3, delete/2, stats/1, items/1, size/1]).
 
 -record(state, {handler,
                 total_cache_size = 0 :: integer(),
@@ -50,59 +51,58 @@
 %%--------------------------------------------------------------------
 %% Function: {ok,Pid} | ignore | {error, Error}
 %% Description: Starts the server.
-start_link(CacheSize) ->
-    ?debugVal(CacheSize),
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [CacheSize], []).
+start_link(Id, CacheSize) ->
+    gen_server:start_link({local, Id}, ?MODULE, [CacheSize], []).
 
 
 %% Function: -> ok
 %% Description: Manually stops the server.
-stop() ->
-    gen_server:cast(?MODULE, stop).
+stop(Pid) ->
+    gen_server:cast(Pid, stop).
 
 
 %% @doc Retrieve a value associated with a specified key
 %%
--spec(get(binary()) ->
+-spec(get(atom(), binary()) ->
              undefined | binary() | {error, any()}).
-get(Key) ->
-    gen_server:call(?MODULE, {get, Key}).
+get(Id, Key) ->
+    gen_server:call(Id, {get, Key}).
 
 
 %% @doc Insert a key-value pair into the cherly
 %%
--spec(put(binary(), binary()) ->
+-spec(put(atom(), binary(), binary()) ->
              ok | {error, any()}).
-put(Key, Value) ->
-    gen_server:call(?MODULE, {put, Key, Value}).
+put(Id, Key, Value) ->
+    gen_server:call(Id, {put, Key, Value}).
 
 
 %% @doc Remove a key-value pair by a specified key into the cherly
--spec(delete(binary()) ->
+-spec(delete(atom(), binary()) ->
              ok | {error, any()}).
-delete(Key) ->
-    gen_server:call(?MODULE, {delete, Key}).
+delete(Id, Key) ->
+    gen_server:call(Id, {delete, Key}).
 
 
 %% @doc Return server's state
--spec(stats() ->
+-spec(stats(atom()) ->
              any()).
-stats() ->
-     gen_server:call(?MODULE, {stats}).
+stats(Id) ->
+     gen_server:call(Id, {stats}).
 
 
 %% @doc Return server's items
--spec(items() ->
+-spec(items(atom()) ->
              any()).
-items() ->
-     gen_server:call(?MODULE, {items}).
+items(Id) ->
+     gen_server:call(Id, {items}).
 
 
 %% @doc Return server's summary of cache size
--spec(size() ->
+-spec(size(atom()) ->
              any()).
-size() ->
-     gen_server:call(?MODULE, {size}).
+size(Id) ->
+     gen_server:call(Id, {size}).
 
 
 %%====================================================================
