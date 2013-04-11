@@ -31,12 +31,13 @@
 -include("cherly.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
-%% gen_server callbacks
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
-
 %% API
 -export([start_link/2, stop/1,
          get/2, put/3, delete/2, stats/1, items/1, size/1]).
+
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+         terminate/2, code_change/3]).
 
 -record(state, {handler,
                 total_cache_size = 0 :: integer(),
@@ -88,21 +89,21 @@ delete(Id, Key) ->
 -spec(stats(atom()) ->
              any()).
 stats(Id) ->
-     gen_server:call(Id, {stats}).
+    gen_server:call(Id, {stats}).
 
 
 %% @doc Return server's items
 -spec(items(atom()) ->
              any()).
 items(Id) ->
-     gen_server:call(Id, {items}).
+    gen_server:call(Id, {items}).
 
 
 %% @doc Return server's summary of cache size
 -spec(size(atom()) ->
              any()).
 size(Id) ->
-     gen_server:call(Id, {size}).
+    gen_server:call(Id, {size}).
 
 
 %%====================================================================
@@ -113,9 +114,9 @@ init([CacheSize]) ->
     {ok, #state{total_cache_size = CacheSize,
                 handler           = Handler}}.
 
-handle_call({get, Key}, _From, State = #state{handler    = Handler,
-                                              stats_gets = Gets,
-                                              stats_hits = Hits}) ->
+handle_call({get, Key}, _From, #state{handler    = Handler,
+                                      stats_gets = Gets,
+                                      stats_hits = Hits} = State) ->
     case catch cherly:get(Handler, Key) of
         {'EXIT', Cause} ->
             {reply, {error, Cause}, State};
@@ -126,8 +127,8 @@ handle_call({get, Key}, _From, State = #state{handler    = Handler,
                                              stats_hits = Hits + 1}}
     end;
 
-handle_call({put, Key, Val}, _From, State = #state{handler    = Handler,
-                                                   stats_puts = Puts}) ->
+handle_call({put, Key, Val}, _From, #state{handler    = Handler,
+                                           stats_puts = Puts} = State) ->
     case catch cherly:put(Handler, Key, Val) of
         {'EXIT', Cause} ->
             {reply, {error, Cause}, State};
