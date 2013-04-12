@@ -132,6 +132,8 @@ handle_call({put, Key, Val}, _From, #state{handler    = Handler,
     case catch cherly:put(Handler, Key, Val) of
         {'EXIT', Cause} ->
             {reply, {error, Cause}, State};
+        {error, Cause} ->
+            {reply, {error, Cause}, State};
         ok ->
             {reply, ok, State#state{stats_puts = Puts + 1}}
     end;
@@ -140,6 +142,8 @@ handle_call({delete, Key}, _From, State = #state{handler    = Handler,
                                                  stats_dels = Dels}) ->
     case catch cherly:remove(Handler, Key) of
         {'EXIT', Cause} ->
+            {reply, {error, Cause}, State};
+        {error, Cause} ->
             {reply, {error, Cause}, State};
         ok ->
             {reply, ok, State#state{stats_dels = Dels + 1}}
