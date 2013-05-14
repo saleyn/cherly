@@ -1,8 +1,8 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include "common.h"
 #include "lru.h"
 #include "double_link.h"
-#include <stdlib.h>
-#include "common.h"
-#include <stdio.h>
 
 static void lru_destroy_item(lru_item_t *item);
 
