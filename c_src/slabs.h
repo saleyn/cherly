@@ -10,7 +10,7 @@
 #define		MAX_NUMBER_OF_SLAB_CLASSES	(POWER_LARGEST + 1)
 #define		POWER_SMALLEST		1
 #define		CHUNK_ALIGN_BYTES	8
-#define		SETTING_VERBOSE		2
+#define		SETTING_VERBOSE		0
 #define		MAX_NUMBER_OF_SLAB_CLASSES	(POWER_LARGEST + 1)
 
 typedef struct slabheader {
